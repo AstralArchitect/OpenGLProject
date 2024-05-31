@@ -7,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <camera.h>
+#include <shader.h>
 
 #include <stdio.h>
 
@@ -59,17 +60,6 @@ int main()
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    float vertices[]{
-        //triangle 1
-        -0.5,  0.0,  0.5,
-        -0.5,  0.0, -0.5,
-         0.5,  0.0, -0.5,
-        //
-         0.5,  0.0, -0.5,
-         0.5,  0.0,  0.5,
-        -0.5,  0.0,  0.5
-    };
-
     // glad: load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -81,6 +71,31 @@ int main()
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+
+    Shader Plan("plan.vs", "plan.fs");
+
+    float planVertices[]{
+        //triangle 1
+        -0.5,  0.0,  0.5,
+        -0.5,  0.0, -0.5,
+         0.5,  0.0, -0.5,
+        //triangle 2
+         0.5,  0.0, -0.5,
+         0.5,  0.0,  0.5,
+        -0.5,  0.0,  0.5
+    };
+
+    unsigned int VBO, VAO;
+
+    glGenBuffers(1, &VBO);
+    glGenVertexArrays(1, &VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(planVertices), planVertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -99,9 +114,22 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        Plan.use();
+        Plan.setVec3("viewPos", camera.Position);
+
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
+        Plan.setMat4("projection", projection);
+        Plan.setMat4("view", view);
+
+        // world transformation
+        glm::mat4 model = glm::mat4(1.0f);
+        Plan.setMat4("model", model);
+
+        // render the cube
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 18);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
