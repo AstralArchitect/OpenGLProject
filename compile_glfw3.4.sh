@@ -39,4 +39,6 @@ cp src/libglfw.so.3 ../../
 
 cd ../..
 
+cp libglfw.so.3 libglfw.so
+
 rm -rf glfw-3.4

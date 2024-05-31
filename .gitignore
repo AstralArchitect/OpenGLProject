@@ -1,4 +1,5 @@
 .vscode/
 builddir/
 libglfw.so.3
+libglfw.so
 glfw3.4.dll
