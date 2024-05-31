@@ -1,0 +1,4 @@
+.vsocode/
+builddir/
+libglfw.so.3
+glfw3.4.dll
