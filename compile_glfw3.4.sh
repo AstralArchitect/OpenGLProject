@@ -35,10 +35,10 @@ cmake -DBUILD_SHARED_LIBS=ON ..
 cmake --build .
 
 # Copier glfw3.so dans le dossier source
-cp src/libglfw.so.3 ../../
+cp src/libglfw.so.3 ../../lib/
 
 cd ../..
 
-cp libglfw.so.3 libglfw.so
+cp lib/libglfw.so.3 lib/libglfw.so
 
 rm -rf glfw-3.4

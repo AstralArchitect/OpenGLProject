@@ -32,7 +32,7 @@ cmake -DBUILD_SHARED_LIBS=ON -G "Unix Makefiles" ..
 cmake --build .
 
 rem Copier glfw3.dll dans le dossier source
-copy src\glfw3.dll ..\..\
+copy src\glfw3.dll ..\..\lib\
 
 cd ..\..\
 

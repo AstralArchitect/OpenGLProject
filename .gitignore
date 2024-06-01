@@ -2,4 +2,4 @@
 builddir/
 libglfw.so.3
 libglfw.so
-glfw3.4.dll
+glfw3.dll
