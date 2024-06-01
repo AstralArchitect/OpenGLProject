@@ -14,7 +14,10 @@ setup:
 # Target to clean the build directory
 clean:
 ifeq ($(OS),Windows_NT)
-	@if exist builddir (rmdir /S /Q builddir)
+	@if exist builddir rmdir /S /Q builddir
+	@if exist glfw3.dll del glfw3.dll
 else
-	@if exist builddir (rm -rf builddir/)
+	@if [ -d builddir ]; then rm -rf builddir; fi
+	@if [ -e libglfw.so ] || [ -e libglfw.so.3 ]; then rm libglfw.so*; fi
 endif
+
