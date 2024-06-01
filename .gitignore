@@ -3,3 +3,6 @@ builddir/
 libglfw.so.3
 libglfw.so
 glfw3.dll
+packagecache
+glfw-*/
+glm-*/
