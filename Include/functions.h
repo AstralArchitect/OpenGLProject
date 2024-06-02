@@ -8,3 +8,6 @@ unsigned int loadTexture(const char *path);
 void bindPlanVertices(unsigned int *VAO, unsigned int *VBO, unsigned int *EBO, float vertices[20], unsigned int indices[6]);
 void initFunctions(Camera *aCamera, float *aDeltaTime);
 GLFWwindow *createContextAndWindows(const unsigned int SCR_WIDTH, const unsigned int SCR_HEIGHT, char *WindowTitle, char *error);
+void initSSAA(int screenWidth, int screenHeight, GLuint ssaaFBO, GLuint ssaaColorBuffer, GLuint ssaaDepthBuffer);
+void initScreenQuad(GLuint *screenQuadVAO, GLuint *screenQuadVBO);
+void renderSSAAResultToScreen(int screenWidth, int screenHeight, GLuint ssaaColorBuffer, Shader *ssaa, GLuint screenQuadVAO);
