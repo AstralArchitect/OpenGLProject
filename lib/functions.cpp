@@ -8,6 +8,29 @@ Camera *theCamera;
 
 float *theDeltaTime;
 
+#ifdef _WIN32
+#include <windows.h>
+
+void sleep_ms(DWORD milliseconds) {
+    Sleep(milliseconds);
+}
+
+#else
+
+#include <time.h>
+
+void sleep_ms(unsigned long milliseconds) {
+    struct timespec ts;
+
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (milliseconds % 1000) * 1000000;
+
+    nanosleep(&ts, NULL);
+}
+
+
+#endif
+
 void initFunctions(Camera *aCamera, float *aDeltaTime)
 {
     theCamera = aCamera;
@@ -31,9 +54,20 @@ void processInput(GLFWwindow *window)
         theCamera->ProcessKeyboard(RIGHT, *theDeltaTime);
         theCamera->ProcessMouseMovement(-(*theDeltaTime) * 500, 0);
     }
-    if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS)
-    {
-        //mettre en plain écran
+    if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
+        static bool isFullscreen = false;
+        static int windowedWidth, windowedHeight, windowedPosX, windowedPosY;
+        if (!isFullscreen) {
+            glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
+            glfwGetWindowPos(window, &windowedPosX, &windowedPosY);
+
+            const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
+        } else {
+            glfwSetWindowMonitor(window, NULL, windowedPosX, windowedPosY, windowedWidth, windowedHeight, 0);
+        }
+        isFullscreen = !isFullscreen;
+        sleep_ms(250);
     }
     
 }
@@ -100,15 +134,17 @@ void bindPlanVertices(unsigned int *VAO, unsigned int *VBO, unsigned int *EBO, f
     glBindVertexArray(*VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, *VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 20, vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 32, vertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * 6, indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * 8, indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 }
 
 GLFWwindow *createContextAndWindows(const unsigned int SCR_WIDTH, const unsigned int SCR_HEIGHT, char *WindowTitle, char *error)
@@ -116,6 +152,7 @@ GLFWwindow *createContextAndWindows(const unsigned int SCR_WIDTH, const unsigned
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
+    glfwWindowHint(GLFW_SAMPLES, 128);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -124,7 +161,7 @@ GLFWwindow *createContextAndWindows(const unsigned int SCR_WIDTH, const unsigned
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, WindowTitle, NULL, NULL);
     if (window == NULL)
     {
         glfwTerminate();
@@ -146,6 +183,7 @@ GLFWwindow *createContextAndWindows(const unsigned int SCR_WIDTH, const unsigned
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);
 
     return window;
 }
