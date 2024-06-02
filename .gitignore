@@ -1,8 +1,5 @@
 .vscode/
 builddir/
-libglfw.so.3
-libglfw.so
-glfw3.dll
-packagecache
+packagecache/
 glfw-*/
 glm-*/
