@@ -51,8 +51,8 @@ int main()
     initFunctions(&camera, &deltaTime);
 
     // build and compile plan and lightCube shader
-    Shader Plan("plan.vs", "plan.fs");
-    Shader lightCubeShader("lightCube.vs", "lightCube.fs");
+    Shader Plan("shaders/Plan/plan.vs", "shaders/Plan/plan.fs");
+    Shader lightCubeShader("shaders/LightCube/lightCube.vs", "shaders/LightCube/lightCube.fs");
 
     float planVertices[]{
         // positions          // texture coords //normals
