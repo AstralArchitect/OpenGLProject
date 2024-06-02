@@ -138,27 +138,8 @@ int main()
     Plan.setInt("material.diffuse", 0);
     Plan.setInt("material.specular", 1);
 
-    GLuint ssaaFBO;
-    GLuint ssaaColorBuffer, ssaaDepthBuffer;
-
-    GLuint screenQuadVAO, screenQuadVBO;
-    GLuint ssaaShaderProgram;
-
-    initSSAA(SCR_WIDTH, SCR_HEIGHT, ssaaFBO, ssaaColorBuffer, ssaaDepthBuffer);
-    initScreenQuad(&screenQuadVAO, &screenQuadVBO);
-
     while (!glfwWindowShouldClose(window))
     {
-        int ssaaWidth = SCR_WIDTH * 2;
-        int ssaaHeight = SCR_HEIGHT * 2;
-
-        // Bind le framebuffer SSAA
-        glBindFramebuffer(GL_FRAMEBUFFER, ssaaFBO);
-        glViewport(0, 0, ssaaWidth, ssaaHeight);  // Mettre à jour le viewport
-
-        // Effacer les buffers de couleur et de profondeur
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         // per-frame time logic
         // --------------------
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -227,10 +208,6 @@ int main()
         //spin the light
         lightPos.x = sin(glfwGetTime());
         lightPos.z = cos(glfwGetTime());
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        renderSSAAResultToScreen(SCR_WIDTH, SCR_HEIGHT, ssaaColorBuffer, ssaaShaderProgram, screenQuadVAO);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
