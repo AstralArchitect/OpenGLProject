@@ -7,10 +7,11 @@
 
 #include <camera.h>
 #include <shader.h>
+#include <rustlib/main.hpp>
 
 #include "functions.h"
 
-#include <stdio.h>
+#include <cstdio>
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -137,6 +138,8 @@ int main()
     Plan.use();
     Plan.setInt("material.diffuse", 0);
     Plan.setInt("material.specular", 1);
+
+    printtest(80);
 
     while (!glfwWindowShouldClose(window))
     {
