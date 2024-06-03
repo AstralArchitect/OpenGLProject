@@ -199,6 +199,7 @@ int main()
         model = glm::mat4(1.0f);
         model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(0.2f));
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.0f, -1.0f, 0.0f));
         lightCubeShader.setMat4("model", model);
 
         glBindVertexArray(lightCubeVAO);
