@@ -10,6 +10,8 @@ Camera *theCamera;
 
 float *theDeltaTime;
 
+extern char mode;
+
 #ifdef _WIN32
 #include <windows.h>
 
@@ -69,6 +71,15 @@ void processInput(GLFWwindow *window)
             glfwSetWindowMonitor(window, NULL, windowedPosX, windowedPosY, windowedWidth, windowedHeight, 0);
         }
         isFullscreen = !isFullscreen;
+        sleep_ms(250);
+    }
+    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
+    {
+        mode++;
+        if (mode > 2)
+        {
+            mode = 0;
+        }
         sleep_ms(250);
     }
     
