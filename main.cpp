@@ -180,22 +180,23 @@ int main()
            by using 'Uniform buffer objects', but that is something we'll discuss in the 'Advanced GLSL' tutorial.
         */
         float linear, quadratic;
+        //directionnal light direction
+        Plan.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
         if (mode == 0)
         {
-            glClearColor(0.75f, 0.52f, 0.3f, 1.0f);
+            glClearColor(0.003f, 0.003f, 0.003f, 1.0f);
 
-            pointLightColors[0] = glm::vec3(1.0f, 0.6f, 0.0f);
-            pointLightColors[1] = glm::vec3(1.0f, 0.0f, 0.0f);
-            pointLightColors[2] = glm::vec3(1.0f, 1.0, 0.0);
-            pointLightColors[3] = glm::vec3(0.2f, 0.2f, 1.0f);
+            for (int i = 0; (unsigned long long)i < sizeof(pointLightColors) / sizeof(glm::vec3) + 1; i++)
+            {
+                pointLightColors[i] = glm::vec3(1.0f, 1.0f, 1.0f);
+            }
 
             linear = 0.09;
             quadratic = 0.032;
 
             // directional light
-            Plan.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-            Plan.setVec3("dirLight.ambient", 0.3f, 0.24f, 0.14f);
-            Plan.setVec3("dirLight.diffuse", 0.7f, 0.42f, 0.26f);
+            Plan.setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
+            Plan.setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
             Plan.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
         }
         else if (mode == 1)
@@ -211,7 +212,6 @@ int main()
             quadratic = 0.032;
 
             // directional light
-            Plan.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
             Plan.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.1f);
             Plan.setVec3("dirLight.diffuse", 0.2f, 0.2f, 0.7f);
             Plan.setVec3("dirLight.specular", 0.7f, 0.7f, 0.7f);
@@ -229,7 +229,6 @@ int main()
             quadratic = 0.07;
 
             // directional light
-            Plan.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
             Plan.setVec3("dirLight.ambient", 0.0f, 0.0f, 0.0f);
             Plan.setVec3("dirLight.diffuse", 0.05f, 0.05f, 0.05f);
             Plan.setVec3("dirLight.specular", 0.2f, 0.2f, 0.2f);
@@ -242,8 +241,32 @@ int main()
             pointLightColors[1] = glm::vec3(0.4f, 0.7f, 0.1f);
             pointLightColors[2] = glm::vec3(0.4f, 0.7f, 0.1f);
             pointLightColors[3] = glm::vec3(0.4f, 0.7f, 0.1f);
+
+            linear = 0.07;
+            quadratic = 0.017;
+
+            // directional light
+            Plan.setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
+            Plan.setVec3("dirLight.diffuse", 1.0f, 1.0f, 1.0f);
+            Plan.setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
         }
-        
+        else if (mode == 4)
+        {
+            glClearColor(0.75f, 0.52f, 0.3f, 1.0f);
+
+            pointLightColors[0] = glm::vec3(1.0f, 0.6f, 0.0f);
+            pointLightColors[1] = glm::vec3(1.0f, 0.0f, 0.0f);
+            pointLightColors[2] = glm::vec3(1.0f, 1.0, 0.0);
+            pointLightColors[3] = glm::vec3(0.2f, 0.2f, 1.0f);
+
+            linear = 0.09;
+            quadratic = 0.032;
+
+            // directional light
+            Plan.setVec3("dirLight.ambient", 0.3f, 0.24f, 0.14f);
+            Plan.setVec3("dirLight.diffuse", 0.7f, 0.42f, 0.26f);
+            Plan.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+        }
         
         // point light 1
         Plan.setVec3("pointLights[0].position", pointLightPositions[0]);
@@ -267,16 +290,8 @@ int main()
         Plan.setVec3("pointLights[2].diffuse", pointLightColors[2]);
         Plan.setVec3("pointLights[2].specular", pointLightColors[2]);
         Plan.setFloat("pointLights[2].constant", 1.0f);
-        if (mode == 2)
-        {
-            Plan.setFloat("pointLights[2].linear", 0.22);
-            Plan.setFloat("pointLights[2].quadratic", 0.20);
-        }
-        else
-        {
-            Plan.setFloat("pointLights[2].linear", linear);
-            Plan.setFloat("pointLights[2].quadratic", quadratic);
-        }
+        Plan.setFloat("pointLights[2].linear", linear);
+        Plan.setFloat("pointLights[2].quadratic", quadratic);
         // point light 4
         Plan.setVec3("pointLights[3].position", pointLightPositions[3]);
         Plan.setVec3("pointLights[3].ambient", pointLightColors[3] * glm::vec3(0.1, 0.1, 0.1));

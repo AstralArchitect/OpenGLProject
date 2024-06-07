@@ -76,7 +76,7 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
     {
         mode++;
-        if (mode > 2)
+        if (mode > 4)
         {
             mode = 0;
         }
