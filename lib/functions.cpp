@@ -71,9 +71,9 @@ void processInput(GLFWwindow *window)
             glfwSetWindowMonitor(window, NULL, windowedPosX, windowedPosY, windowedWidth, windowedHeight, 0);
         }
         isFullscreen = !isFullscreen;
-        sleep_ms(250);
+        sleep_ms(500);
     }
-    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
     {
         mode++;
         if (mode > 4)
