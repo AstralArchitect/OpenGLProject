@@ -53,7 +53,7 @@ void processInput(GLFWwindow *window)
         theCamera->ProcessKeyboard(LEFT, *theDeltaTime);
         theCamera->ProcessMouseMovement(*theDeltaTime * 500, 0);
     }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
         theCamera->ProcessKeyboard(RIGHT, *theDeltaTime);
         theCamera->ProcessMouseMovement(-(*theDeltaTime) * 500, 0);
