@@ -26,3 +26,6 @@ ifeq ($(OS),Windows_NT)
 else
 	@if [ -d builddir ]; then rm -rf builddir; fi
 endif
+
+resetup: clean setup
+resetupGcc: clean setupGcc
