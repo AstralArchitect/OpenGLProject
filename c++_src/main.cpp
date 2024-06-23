@@ -5,8 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <camera.h>
-#include <shader.h>
+#include <tools/camera.h>
+#include <tools/shader.h>
 #include <rustlib/main.hpp>
 
 #include "functions.h"
@@ -60,10 +60,10 @@ int main()
 
     float planVertices[]{
         // positions          // texture coords //normals
-         0.5f, -0.5f,  0.5f,   4.0f, 4.0f,      1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,   4.0f, 0.0f,      1.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,      1.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,   0.0f, 4.0f,      1.0f,  0.0f, 0.0f
+         0.5f, -0.5f,  0.5f,   4.0f, 4.0f,      0.0f,  1.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,   4.0f, 0.0f,      0.0f,  1.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,      0.0f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,   0.0f, 4.0f,      0.0f,  1.0f, 0.0f
     };
     unsigned int planIndices[] = {
         0, 1, 3, // first triangle
