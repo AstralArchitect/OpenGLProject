@@ -1,10 +1,17 @@
 project('learnOpenGL', 'c', 'cpp', 'rust')
 
-rust_sources = ['rustsrc/lib.rs']
-rustlib = static_library('rustlib', rust_sources, rust_abi: 'c')
-# rustlib = static_library('rustlib', rust_sources, rust_crate_type: 'staticlib')
+cppDir = 'c++_src/'
+rustDir = 'rustsrc/'
 
-sources = ['main.cpp', 'lib/glad.c', 'lib/functions.cpp']
+personnalCppLibs = cppDir + 'libs/'
+
+OpenGL_lib = 'c++_src/OpenGL_libs/'
+
+rust_sources = [rustDir + 'lib.rs']
+# rustlib = static_library('rustlib', rust_sources, rust_abi: 'c')
+rustlib = static_library('rustlib', rust_sources, rust_crate_type: 'staticlib')
+
+sources = [cppDir + 'main.cpp', OpenGL_lib + 'glad.c', personnalCppLibs + 'functions.cpp']
 include_dir = include_directories('Include')
 glfw_dep = dependency('glfw3')
 glm_dep = dependency('glm')

@@ -1,10 +1,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <stb_image.h>
+#include <OpenGlTools/stb_image.h>
 
-#include <shader.h>
-
-#include <camera.h>
+#include <tools/shader.h>
+#include <tools/camera.h>
 
 Camera *theCamera;
 
@@ -48,12 +47,12 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
     {
         theCamera->ProcessKeyboard(LEFT, *theDeltaTime);
         theCamera->ProcessMouseMovement(*theDeltaTime * 500, 0);
     }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
     {
         theCamera->ProcessKeyboard(RIGHT, *theDeltaTime);
         theCamera->ProcessMouseMovement(-(*theDeltaTime) * 500, 0);
