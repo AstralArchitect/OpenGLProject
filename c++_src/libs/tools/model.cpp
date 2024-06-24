@@ -53,18 +53,24 @@ Model::Model(const char* vertexShaderPath, const char* fragmentShaderPath, const
 
     textures = (unsigned int *)malloc(nbTextures * sizeof(unsigned int));
 
-    for (int i = 0; i < nbTextures; i++)
+    for (unsigned int i = 0; i < nbTextures; i++)
     {
         textures[i] = loadTexture(texturePaths[i]);
     }
 }
 
-Model::~Model(){}
+Model::~Model()
+{
+    glDeleteProgram(shader->ID);
+    glDeleteTextures(nbTextures, &textures[0]);
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+}
 
 void Model::render()
 {
     //active and bind texture
-    short actualTexture = GL_TEXTURE0;
+    int actualTexture = GL_TEXTURE0;
     for (unsigned int i = 0; i < nbTextures; i++)
     {
         glActiveTexture(actualTexture);

@@ -10,8 +10,8 @@ toolsDir = personnalCppLibs + 'tools/'
 OpenGL_lib = 'c++_src/OpenGL_libs/'
 
 rust_sources = [rustDir + 'lib.rs']
-rustlib = static_library('rustlib', rust_sources, rust_abi: 'c')
-# rustlib = static_library('rustlib', rust_sources, rust_crate_type: 'staticlib')
+# rustlib = static_library('rustlib', rust_sources, rust_abi: 'c')
+rustlib = static_library('rustlib', rust_sources, rust_crate_type: 'staticlib')
 
 cppSources = [cppDir + 'main.cpp']
 OpenGlLibsSources = [OpenGL_lib + 'glad.c']
