@@ -99,6 +99,13 @@ void Model::rotate(float angle, glm::vec3 rotateVector)
     model = glm::rotate(model, angle, rotateVector);
 }
 
+// activate the shader
+// ------------------------------------------------------------------------
+void Model::use() const
+{ 
+    glUseProgram(shader->ID); 
+}
+
 // utility uniform functions
 // ------------------------------------------------------------------------
 void Model::setBool(const std::string &name, bool value) const

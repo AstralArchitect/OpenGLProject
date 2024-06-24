@@ -32,6 +32,10 @@ public:
     //render the model
     void render();
 
+    // activate the shader
+    // ------------------------------------------------------------------------
+    void use() const;
+
     //transformations functions
     //------------------------------------------------------------------------
     void translate(glm::vec3 newPos);

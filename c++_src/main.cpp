@@ -152,9 +152,9 @@ int main()
     Model *lamp = new Model("shaders/LightCube/vertex.vs", "shaders/LightCube/fragment.fs", lightCubeVAO, LightCubeVBO, 36, SCR_WIDTH, SCR_HEIGHT, NULL, 0);
 
     //shader configuration
-    plan->shader->use();
-    plan->shader->setInt("material.diffuse", 0);
-    plan->shader->setInt("material.specular", 1);
+    plan->use();
+    plan->setInt("material.diffuse", 0);
+    plan->setInt("material.specular", 1);
 
     printtest(80);
 
@@ -183,9 +183,9 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // be sure to activate shader when setting uniforms/drawing objects
-        plan->shader->use();
-        plan->shader->setVec3("viewPos", camera.Position);
-        plan->shader->setFloat("material.shininess", 32.0f);
+        plan->use();
+        plan->setVec3("viewPos", camera.Position);
+        plan->setFloat("material.shininess", 32.0f);
 
         /*
            Here we set all the uniforms for the 5/6 types of lights we have. We have to set them manually and index 
@@ -195,7 +195,7 @@ int main()
         */
         float linear, quadratic;
         //directionnal light direction
-        plan->shader->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        plan->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
         if (mode == 0)
         {
             glClearColor(0.003f, 0.003f, 0.003f, 1.0f);
@@ -209,9 +209,9 @@ int main()
             quadratic = 0.032;
 
             // directional light
-            plan->shader->setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
-            plan->shader->setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-            plan->shader->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+            plan->setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
+            plan->setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
+            plan->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
         }
         else if (mode == 1)
         {
@@ -226,9 +226,9 @@ int main()
             quadratic = 0.032;
 
             // directional light
-            plan->shader->setVec3("dirLight.ambient", 0.05f, 0.05f, 0.1f);
-            plan->shader->setVec3("dirLight.diffuse", 0.2f, 0.2f, 0.7f);
-            plan->shader->setVec3("dirLight.specular", 0.7f, 0.7f, 0.7f);
+            plan->setVec3("dirLight.ambient", 0.05f, 0.05f, 0.1f);
+            plan->setVec3("dirLight.diffuse", 0.2f, 0.2f, 0.7f);
+            plan->setVec3("dirLight.specular", 0.7f, 0.7f, 0.7f);
         }
         else if (mode == 2)
         {
@@ -243,9 +243,9 @@ int main()
             quadratic = 0.07;
 
             // directional light
-            plan->shader->setVec3("dirLight.ambient", 0.0f, 0.0f, 0.0f);
-            plan->shader->setVec3("dirLight.diffuse", 0.05f, 0.05f, 0.05f);
-            plan->shader->setVec3("dirLight.specular", 0.2f, 0.2f, 0.2f);
+            plan->setVec3("dirLight.ambient", 0.0f, 0.0f, 0.0f);
+            plan->setVec3("dirLight.diffuse", 0.05f, 0.05f, 0.05f);
+            plan->setVec3("dirLight.specular", 0.2f, 0.2f, 0.2f);
         }
         else if (mode == 3)
         {
@@ -260,9 +260,9 @@ int main()
             quadratic = 0.017;
 
             // directional light
-            plan->shader->setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
-            plan->shader->setVec3("dirLight->diffuse", 1.0f, 1.0f, 1.0f);
-            plan->shader->setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
+            plan->setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
+            plan->setVec3("dirLight->diffuse", 1.0f, 1.0f, 1.0f);
+            plan->setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
         }
         else if (mode == 4)
         {
@@ -277,62 +277,62 @@ int main()
             quadratic = 0.032;
 
             // directional light
-            plan->shader->setVec3("dirLight.ambient", 0.3f, 0.24f, 0.14f);
-            plan->shader->setVec3("dirLight.diffuse", 0.7f, 0.42f, 0.26f);
-            plan->shader->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+            plan->setVec3("dirLight.ambient", 0.3f, 0.24f, 0.14f);
+            plan->setVec3("dirLight.diffuse", 0.7f, 0.42f, 0.26f);
+            plan->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
         }
         
         // point light 1
-        plan->shader->setVec3("pointLights[0].position", pointLightPositions[0]);
-        plan->shader->setVec3("pointLights[0].ambient", pointLightColors[0] * glm::vec3(0.1, 0.1, 0.1));
-        plan->shader->setVec3("pointLights[0].diffuse", pointLightColors[0]);
-        plan->shader->setVec3("pointLights[0].specular", pointLightColors[0]);
-        plan->shader->setFloat("pointLights[0].constant", 1.0f);
-        plan->shader->setFloat("pointLights[0].linear", linear);
-        plan->shader->setFloat("pointLights[0].quadratic", quadratic);
+        plan->setVec3("pointLights[0].position", pointLightPositions[0]);
+        plan->setVec3("pointLights[0].ambient", pointLightColors[0] * glm::vec3(0.1, 0.1, 0.1));
+        plan->setVec3("pointLights[0].diffuse", pointLightColors[0]);
+        plan->setVec3("pointLights[0].specular", pointLightColors[0]);
+        plan->setFloat("pointLights[0].constant", 1.0f);
+        plan->setFloat("pointLights[0].linear", linear);
+        plan->setFloat("pointLights[0].quadratic", quadratic);
         // point light 2
-        plan->shader->setVec3("pointLights[1].position", pointLightPositions[1]);
-        plan->shader->setVec3("pointLights[1].ambient", pointLightColors[1] * glm::vec3(0.1, 0.1, 0.1));
-        plan->shader->setVec3("pointLights[1].diffuse", pointLightColors[1]);
-        plan->shader->setVec3("pointLights[1].specular", pointLightColors[1]);
-        plan->shader->setFloat("pointLights[1].constant", 1.0f);
-        plan->shader->setFloat("pointLights[1].linear", linear);
-        plan->shader->setFloat("pointLights[1].quadratic", quadratic);
+        plan->setVec3("pointLights[1].position", pointLightPositions[1]);
+        plan->setVec3("pointLights[1].ambient", pointLightColors[1] * glm::vec3(0.1, 0.1, 0.1));
+        plan->setVec3("pointLights[1].diffuse", pointLightColors[1]);
+        plan->setVec3("pointLights[1].specular", pointLightColors[1]);
+        plan->setFloat("pointLights[1].constant", 1.0f);
+        plan->setFloat("pointLights[1].linear", linear);
+        plan->setFloat("pointLights[1].quadratic", quadratic);
         // point light 3
-        plan->shader->setVec3("pointLights[2].position", pointLightPositions[2]);
-        plan->shader->setVec3("pointLights[2].ambient", pointLightColors[2] * glm::vec3(0.1, 0.1, 0.1));
-        plan->shader->setVec3("pointLights[2].diffuse", pointLightColors[2]);
-        plan->shader->setVec3("pointLights[2].specular", pointLightColors[2]);
-        plan->shader->setFloat("pointLights[2].constant", 1.0f);
-        plan->shader->setFloat("pointLights[2].linear", linear);
-        plan->shader->setFloat("pointLights[2].quadratic", quadratic);
+        plan->setVec3("pointLights[2].position", pointLightPositions[2]);
+        plan->setVec3("pointLights[2].ambient", pointLightColors[2] * glm::vec3(0.1, 0.1, 0.1));
+        plan->setVec3("pointLights[2].diffuse", pointLightColors[2]);
+        plan->setVec3("pointLights[2].specular", pointLightColors[2]);
+        plan->setFloat("pointLights[2].constant", 1.0f);
+        plan->setFloat("pointLights[2].linear", linear);
+        plan->setFloat("pointLights[2].quadratic", quadratic);
         // point light 4
-        plan->shader->setVec3("pointLights[3].position", pointLightPositions[3]);
-        plan->shader->setVec3("pointLights[3].ambient", pointLightColors[3] * glm::vec3(0.1, 0.1, 0.1));
-        plan->shader->setVec3("pointLights[3].diffuse", pointLightPositions[3]);
-        plan->shader->setVec3("pointLights[3].specular", pointLightPositions[3]);
-        plan->shader->setFloat("pointLights[3].constant", 1.0f);
-        plan->shader->setFloat("pointLights[3].linear", linear);
-        plan->shader->setFloat("pointLights[3].quadratic", quadratic);
+        plan->setVec3("pointLights[3].position", pointLightPositions[3]);
+        plan->setVec3("pointLights[3].ambient", pointLightColors[3] * glm::vec3(0.1, 0.1, 0.1));
+        plan->setVec3("pointLights[3].diffuse", pointLightPositions[3]);
+        plan->setVec3("pointLights[3].specular", pointLightPositions[3]);
+        plan->setFloat("pointLights[3].constant", 1.0f);
+        plan->setFloat("pointLights[3].linear", linear);
+        plan->setFloat("pointLights[3].quadratic", quadratic);
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        plan->shader->setMat4("projection", projection);
-        plan->shader->setMat4("view", view);
+        plan->setMat4("projection", projection);
+        plan->setMat4("view", view);
 
         // world transformation
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
-        plan->shader->setMat4("model", model);
+        plan->setMat4("model", model);
 
         // render the plan
         plan->render();
 
         // also draw the lamp object(s)
-        lamp->shader->use();
-        lamp->shader->setMat4("projection", projection);
-        lamp->shader->setMat4("view", view);
+        lamp->use();
+        lamp->setMat4("projection", projection);
+        lamp->setMat4("view", view);
 
         const int nb_lampes = 4;
 
@@ -340,11 +340,11 @@ int main()
         glBindVertexArray(lightCubeVAO);
         for (unsigned int i = 0; i < nb_lampes; i++)
         {
-            lamp->shader->setVec3("color", pointLightColors[i]);
+            lamp->setVec3("color", pointLightColors[i]);
             model = glm::mat4(1.0f);
             model = glm::translate(model, pointLightPositions[i]);
             model = glm::scale(model, glm::vec3(0.2f));
-            lamp->shader->setMat4("model", model);
+            lamp->setMat4("model", model);
             lamp->render();
         }
 
