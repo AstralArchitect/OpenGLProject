@@ -31,6 +31,11 @@ float lastFrame = 0.0f;
 //light mode
 char mode = 0;
 
+//lights translate variable
+float x = 1.0f;
+float y = 1.0f;
+float z = 1.0f;
+
 glm::vec3 lightPos(1.2f, 1.0f, 1.2f);
 
 int main()
@@ -344,6 +349,7 @@ int main()
             model = glm::mat4(1.0f);
             model = glm::translate(model, pointLightPositions[i]);
             model = glm::scale(model, glm::vec3(0.2f));
+            model = glm::translate(model, glm::vec3(x, y, z));
             lamp->setMat4("model", model);
             lamp->render();
         }
