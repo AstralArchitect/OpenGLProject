@@ -200,13 +200,13 @@ int main()
         {
             glClearColor(0.003f, 0.003f, 0.003f, 1.0f);
 
-            for (int i = 0; (unsigned long long)i < sizeof(pointLightColors) / sizeof(glm::vec3) + 1; i++)
-            {
-                pointLightColors[i] = glm::vec3(1.0f, 1.0f, 1.0f);
-            }
+            pointLightColors[0] = glm::vec3(1.0f, 1.0f, 1.0f);
+            pointLightColors[1] = glm::vec3(1.0f, 1.0f, 1.0f);
+            pointLightColors[2] = glm::vec3(1.0f, 1.0f, 1.0f);
+            pointLightColors[3] = glm::vec3(1.0f, 1.0f, 1.0f);
 
-            linear = 0.09;
-            quadratic = 0.032;
+            linear = 0.045;
+            quadratic = 0.0075;
 
             // directional light
             plan->setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
@@ -261,7 +261,7 @@ int main()
 
             // directional light
             plan->setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
-            plan->setVec3("dirLight->diffuse", 1.0f, 1.0f, 1.0f);
+            plan->setVec3("dirLight.diffuse", 1.0f, 1.0f, 1.0f);
             plan->setVec3("dirLight.specular", 1.0f, 1.0f, 1.0f);
         }
         else if (mode == 4)

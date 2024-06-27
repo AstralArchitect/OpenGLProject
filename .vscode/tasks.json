@@ -1,0 +1,36 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "meson",
+			"target": "main:executable",
+			"filename": "/home/matthieu/GitHub_Repos/OpenGLProject/builddir/main",
+			"mode": "run",
+			"group": "none",
+			"problemMatcher": [],
+			"label": "Meson: Run main"
+		},
+		{
+			"type": "meson",
+			"mode": "build",
+			"problemMatcher": [
+				"$meson-gcc"
+			],
+			"group": "build",
+			"label": "Meson: Build all targets"
+		},
+		{
+			"label": "Meson: Build and Run",
+			"type": "shell",
+			"command": "echo",
+			"args": [
+				"Building and Running main executable...",
+				"&&",
+				"make",
+				"run"
+			],
+			"group": "test",
+			"problemMatcher": []
+		}
+	]
+}
