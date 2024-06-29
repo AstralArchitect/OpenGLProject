@@ -1,6 +1,6 @@
-.vscode/settings.json
 builddir/
 packagecache/
 glfw-*/
 glm-*/
 horloge.blend1
+.vscode/

@@ -7,7 +7,7 @@ run: all
 ifeq ($(OS),Windows_NT)
 	.\addToPathAndRun.bat
 else
-	./builddir/main
+	./builddir/mainR
 endif
 
 # Target to set up the build directory
