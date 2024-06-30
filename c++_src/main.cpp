@@ -19,7 +19,7 @@ const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 2.7f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -30,11 +30,6 @@ float lastFrame = 0.0f;
 
 //light mode
 char mode = 0;
-
-//lights translate variable
-float x = 1.0f;
-float y = 1.0f;
-float z = 1.0f;
 
 glm::vec3 lightPos(1.2f, 1.0f, 1.2f);
 
@@ -87,13 +82,6 @@ int main()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
-
-    char* texturePaths[2] = {
-        (char*)"res/bois.jpg",
-        (char*)"res/bois_specular.jpg"
-    };
-
-    Model *plan = new Model("./shaders/Plan/plan.vs", "./shaders/Plan/plan.fs", planVAO, planVBO, 6, SCR_WIDTH, SCR_HEIGHT, texturePaths, 2);
 
     float lightCubeVertices[]{
         // positions
@@ -156,20 +144,28 @@ int main()
 
     Model *lamp = new Model("shaders/LightCube/vertex.vs", "shaders/LightCube/fragment.fs", lightCubeVAO, LightCubeVBO, 36, SCR_WIDTH, SCR_HEIGHT, NULL, 0);
 
+    char* texturePaths[2] = {
+        (char*)"res/bois.jpg",
+        (char*)"res/bois_specular.jpg"
+    };
+
+    Model *plan = new Model("./shaders/Plan/plan.vs", "./shaders/Plan/plan.fs", planVAO, planVBO, 6, SCR_WIDTH, SCR_HEIGHT, texturePaths, 2);
+
+    printf("nombre de lampes ?:");
+    unsigned char nb_lampes = 0;
+    scanf("%hhd", &nb_lampes);
+
     //shader configuration
     plan->use();
     plan->setInt("material.diffuse", 0);
     plan->setInt("material.specular", 1);
+    plan->setInt("nb_lampes", nb_lampes);
 
     printtest(80);
 
-    glm::vec3 pointLightPositions[] = {
-        glm::vec3( 0.7f, 0.2f, 2.0f),
-        glm::vec3( 2.3f, -3.3f, -4.0f),
-        glm::vec3(-4.0f, 2.0f, -12.0f),
-        glm::vec3( 0.0f, 0.0f, -3.0f)
-    };
-    glm::vec3 pointLightColors[3];
+    glm::vec3 pointLightPositions[nb_lampes];
+    glm::vec3 pointLightColors[nb_lampes];
+    
 
     while (!glfwWindowShouldClose(window))
     {
@@ -190,14 +186,16 @@ int main()
         // be sure to activate shader when setting uniforms/drawing objects
         plan->use();
         plan->setVec3("viewPos", camera.Position);
-        plan->setFloat("material.shininess", 32.0f);
+        plan->setFloat("material.shininess", 16.0f);
 
-        /*
-           Here we set all the uniforms for the 5/6 types of lights we have. We have to set them manually and index 
-           the proper PointLight struct in the array to set each uniform variable. This can be done more code-friendly
-           by defining light types as classes and set their values in there, or by using a more efficient uniform approach
-           by using 'Uniform buffer objects', but that is something we'll discuss in the 'Advanced GLSL' tutorial.
-        */
+        //set the light positions
+        for (int i = 0; i < nb_lampes; i++) {
+            double angle = (double)i / (double)nb_lampes * 2.0f * M_PIf128;
+            pointLightPositions[i].x = (float)(sin(angle + (glfwGetTime() / 2.0f)) * (double)nb_lampes);
+            pointLightPositions[i].z = (float)(sin(angle + (glfwGetTime() / 2.0f)) * (double)nb_lampes);
+            pointLightPositions[i].y = 0.5f;
+        }
+
         float linear, quadratic;
         //directionnal light direction
         plan->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
@@ -205,10 +203,10 @@ int main()
         {
             glClearColor(0.003f, 0.003f, 0.003f, 1.0f);
 
-            pointLightColors[0] = glm::vec3(1.0f, 1.0f, 1.0f);
-            pointLightColors[1] = glm::vec3(1.0f, 1.0f, 1.0f);
-            pointLightColors[2] = glm::vec3(1.0f, 1.0f, 1.0f);
-            pointLightColors[3] = glm::vec3(1.0f, 1.0f, 1.0f);
+            for (int i = 0; (char)i < nb_lampes; i++)
+            {
+                pointLightColors[i] = glm::vec3(1.0f);
+            }
 
             linear = 0.045;
             quadratic = 0.0075;
@@ -220,6 +218,11 @@ int main()
         }
         else if (mode == 1)
         {
+            if (nb_lampes != 4)
+            {
+                mode++;
+            }
+            
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
             pointLightColors[0] = glm::vec3(0.2f, 0.2f, 0.6f);
@@ -239,10 +242,11 @@ int main()
         {
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-            pointLightColors[0] = glm::vec3(0.1f, 0.1f, 0.1f);
-            pointLightColors[1] = glm::vec3(0.1f, 0.1f, 0.1f);
-            pointLightColors[2] = glm::vec3(0.1f, 0.1f, 0.1f);
-            pointLightColors[3] = glm::vec3(0.3f, 0.1f, 0.1f);
+            pointLightColors[0] = glm::vec3(0.3f, 0.1f, 0.1f);
+            for (unsigned char i = 1; i < nb_lampes; i++)
+            {
+                pointLightColors[i] = glm::vec3(0.1, 0.1, 0.1);
+            }
 
             linear = 0.14;
             quadratic = 0.07;
@@ -256,10 +260,11 @@ int main()
         {
             glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
 
-            pointLightColors[0] = glm::vec3(0.4f, 0.7f, 0.1f);
-            pointLightColors[1] = glm::vec3(0.4f, 0.7f, 0.1f);
-            pointLightColors[2] = glm::vec3(0.4f, 0.7f, 0.1f);
-            pointLightColors[3] = glm::vec3(0.4f, 0.7f, 0.1f);
+            for (unsigned char i = 0; i < nb_lampes; i++)
+            {
+                pointLightColors[i] = glm::vec3(0.4f, 0.7f, 0.1f);
+            }
+            
 
             linear = 0.07;
             quadratic = 0.017;
@@ -271,12 +276,20 @@ int main()
         }
         else if (mode == 4)
         {
+            if (!(nb_lampes % 4 == 0))
+            {
+                mode++;
+            }
+            
             glClearColor(0.75f, 0.52f, 0.3f, 1.0f);
 
-            pointLightColors[0] = glm::vec3(1.0f, 0.6f, 0.0f);
-            pointLightColors[1] = glm::vec3(1.0f, 0.0f, 0.0f);
-            pointLightColors[2] = glm::vec3(1.0f, 1.0, 0.0);
-            pointLightColors[3] = glm::vec3(0.2f, 0.2f, 1.0f);
+            for (unsigned char i = 0; i < nb_lampes; i += 4)
+            {
+                pointLightColors[i + 0] = glm::vec3(1.0f, 0.6f, 0.0f);
+                pointLightColors[i + 1] = glm::vec3(1.0f, 0.0f, 0.0f);
+                pointLightColors[i + 2] = glm::vec3(1.0f, 1.0, 0.0);
+                pointLightColors[i + 3] = glm::vec3(0.2f, 0.2f, 1.0f);
+            }
 
             linear = 0.09;
             quadratic = 0.032;
@@ -286,39 +299,32 @@ int main()
             plan->setVec3("dirLight.diffuse", 0.7f, 0.42f, 0.26f);
             plan->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
         }
-        
-        // point light 1
-        plan->setVec3("pointLights[0].position", pointLightPositions[0]);
-        plan->setVec3("pointLights[0].ambient", pointLightColors[0] * glm::vec3(0.1, 0.1, 0.1));
-        plan->setVec3("pointLights[0].diffuse", pointLightColors[0]);
-        plan->setVec3("pointLights[0].specular", pointLightColors[0]);
-        plan->setFloat("pointLights[0].constant", 1.0f);
-        plan->setFloat("pointLights[0].linear", linear);
-        plan->setFloat("pointLights[0].quadratic", quadratic);
-        // point light 2
-        plan->setVec3("pointLights[1].position", pointLightPositions[1]);
-        plan->setVec3("pointLights[1].ambient", pointLightColors[1] * glm::vec3(0.1, 0.1, 0.1));
-        plan->setVec3("pointLights[1].diffuse", pointLightColors[1]);
-        plan->setVec3("pointLights[1].specular", pointLightColors[1]);
-        plan->setFloat("pointLights[1].constant", 1.0f);
-        plan->setFloat("pointLights[1].linear", linear);
-        plan->setFloat("pointLights[1].quadratic", quadratic);
-        // point light 3
-        plan->setVec3("pointLights[2].position", pointLightPositions[2]);
-        plan->setVec3("pointLights[2].ambient", pointLightColors[2] * glm::vec3(0.1, 0.1, 0.1));
-        plan->setVec3("pointLights[2].diffuse", pointLightColors[2]);
-        plan->setVec3("pointLights[2].specular", pointLightColors[2]);
-        plan->setFloat("pointLights[2].constant", 1.0f);
-        plan->setFloat("pointLights[2].linear", linear);
-        plan->setFloat("pointLights[2].quadratic", quadratic);
-        // point light 4
-        plan->setVec3("pointLights[3].position", pointLightPositions[3]);
-        plan->setVec3("pointLights[3].ambient", pointLightColors[3] * glm::vec3(0.1, 0.1, 0.1));
-        plan->setVec3("pointLights[3].diffuse", pointLightPositions[3]);
-        plan->setVec3("pointLights[3].specular", pointLightPositions[3]);
-        plan->setFloat("pointLights[3].constant", 1.0f);
-        plan->setFloat("pointLights[3].linear", linear);
-        plan->setFloat("pointLights[3].quadratic", quadratic);
+
+        for (int i = 0; (char)i < nb_lampes; i++)
+        {
+            char uniformString[100];
+            
+            sprintf(uniformString, "pointLights[%d].position", i);
+            plan->setVec3(uniformString, pointLightPositions[i]);
+            
+            sprintf(uniformString, "pointLights[%d].ambient", i);
+            plan->setVec3(uniformString, pointLightColors[i] * glm::vec3(0.1, 0.1, 0.1));
+            
+            sprintf(uniformString, "pointLights[%d].diffuse", i);
+            plan->setVec3(uniformString, pointLightColors[i]);
+            
+            sprintf(uniformString, "pointLights[%d].specular", i);
+            plan->setVec3(uniformString, pointLightColors[i]);
+            
+            sprintf(uniformString, "pointLights[%d].constant", i);
+            plan->setFloat(uniformString, 1.0f);
+            
+            sprintf(uniformString, "pointLights[%d].linear", i);
+            plan->setFloat(uniformString, linear);
+            
+            sprintf(uniformString, "pointLights[%d].quadratic", i);
+            plan->setFloat(uniformString, quadratic);
+        }
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -339,17 +345,14 @@ int main()
         lamp->setMat4("projection", projection);
         lamp->setMat4("view", view);
 
-        const int nb_lampes = 4;
-
         // we now draw as many light bulbs as we have point lights.
         glBindVertexArray(lightCubeVAO);
-        for (unsigned int i = 0; i < nb_lampes; i++)
+        for (int i = 0; (char)i < nb_lampes; i++)
         {
             lamp->setVec3("color", pointLightColors[i]);
             model = glm::mat4(1.0f);
             model = glm::translate(model, pointLightPositions[i]);
             model = glm::scale(model, glm::vec3(0.2f));
-            model = glm::translate(model, glm::vec3(x, y, z));
             lamp->setMat4("model", model);
             lamp->render();
         }

@@ -10,11 +10,6 @@ float *theDeltaTime;
 
 extern char mode;
 
-//lights translate vector
-extern float x;
-extern float y;
-extern float z;
-
 #ifdef _WIN32
 #include <windows.h>
 
@@ -55,15 +50,11 @@ void processInput(GLFWwindow *window)
     {
         theCamera->ProcessKeyboard(LEFT, *theDeltaTime);
         theCamera->ProcessMouseMovement(*theDeltaTime * 500, 0);
-        x = sin(glfwGetTime() * 10.0f);
-        z = cos(glfwGetTime() * 10.0f);
     }
     else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
     {
         theCamera->ProcessKeyboard(RIGHT, *theDeltaTime);
         theCamera->ProcessMouseMovement(-(*theDeltaTime) * 500, 0);
-        x = sin(glfwGetTime() * 10.0f);
-        z = cos(glfwGetTime() * 10.0f);
     }
     if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
         static bool isFullscreen = false;
