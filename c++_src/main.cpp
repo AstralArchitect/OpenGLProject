@@ -151,9 +151,7 @@ int main()
 
     Model *plan = new Model("./shaders/Plan/plan.vs", "./shaders/Plan/plan.fs", planVAO, planVBO, 6, SCR_WIDTH, SCR_HEIGHT, texturePaths, 2);
 
-    printf("nombre de lampes ?:");
-    unsigned char nb_lampes = 0;
-    scanf("%hhd", &nb_lampes);
+    const unsigned char nb_lampes = 4;
 
     //shader configuration
     plan->use();
@@ -190,9 +188,9 @@ int main()
 
         //set the light positions
         for (int i = 0; i < nb_lampes; i++) {
-            double angle = (double)i / (double)nb_lampes * 2.0f * M_PIf128;
-            pointLightPositions[i].x = (float)(sin(angle + (glfwGetTime() / 2.0f)) * (double)nb_lampes);
-            pointLightPositions[i].z = (float)(sin(angle + (glfwGetTime() / 2.0f)) * (double)nb_lampes);
+            float angle = (float)i / (float)nb_lampes * 2.0f * M_PI;
+            pointLightPositions[i].x = cos(angle + (glfwGetTime() / 2.0f)) * (float)nb_lampes;
+            pointLightPositions[i].z = sin(angle + (glfwGetTime() / 2.0f)) * (float)nb_lampes;
             pointLightPositions[i].y = 0.5f;
         }
 
@@ -221,6 +219,7 @@ int main()
             if (nb_lampes != 4)
             {
                 mode++;
+                continue;
             }
             
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -279,6 +278,7 @@ int main()
             if (!(nb_lampes % 4 == 0))
             {
                 mode++;
+                continue;
             }
             
             glClearColor(0.75f, 0.52f, 0.3f, 1.0f);

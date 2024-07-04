@@ -1,4 +1,4 @@
-project('learnOpenGL', 'c', 'cpp', 'rust', version : 'Alpha')
+project('OpenGL', 'c', 'cpp', 'rust', version : 'Alpha')
 
 cppDir = 'c++_src/'
 rustDir = 'rustsrc/'
@@ -10,8 +10,7 @@ toolsDir = personnalCppLibs + 'tools/'
 OpenGL_lib = 'c++_src/OpenGL_libs/'
 
 rust_sources = [rustDir + 'lib.rs']
-# rustlib = static_library('rustlib', rust_sources, rust_abi: 'c')
-rustlib = static_library('rustlib', rust_sources, rust_crate_type: 'staticlib')
+rustlib = static_library('rustlib', rust_sources, rust_abi: 'c')
 
 cppSources = [cppDir + 'main.cpp']
 OpenGlLibsSources = [OpenGL_lib + 'glad.c']
