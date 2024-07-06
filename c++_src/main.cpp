@@ -151,6 +151,7 @@ int main()
 
     Model *plan = new Model("./shaders/Plan/plan.vs", "./shaders/Plan/plan.fs", planVAO, planVBO, 6, SCR_WIDTH, SCR_HEIGHT, texturePaths, 2);
 
+    // nombre de lampes, max : 100
     const unsigned char nb_lampes = 4;
 
     //shader configuration
@@ -188,7 +189,7 @@ int main()
 
         //set the light positions
         for (int i = 0; i < nb_lampes; i++) {
-            float angle = (float)i / (float)nb_lampes * 2.0f * M_PI;
+            float angle = (float)i / (float)nb_lampes * 2.0f * 3.1415926;
             pointLightPositions[i].x = cos(angle + (glfwGetTime() / 2.0f)) * (float)nb_lampes;
             pointLightPositions[i].z = sin(angle + (glfwGetTime() / 2.0f)) * (float)nb_lampes;
             pointLightPositions[i].y = 0.5f;

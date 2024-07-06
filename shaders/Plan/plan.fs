@@ -35,7 +35,7 @@ in vec2 TexCoords;
 
 uniform vec3 viewPos;
 uniform DirLight dirLight;
-uniform PointLight pointLights[256];
+uniform PointLight pointLights[100];
 uniform Material material;
 
 // function prototypes
