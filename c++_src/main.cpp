@@ -52,9 +52,6 @@ int main()
         return -1;
     }
 
-    //init functions from functions.cpp
-    initFunctions(&camera, &deltaTime);
-
     float planVertices[]{
         // positions          // texture coords //normals
         //first triangle

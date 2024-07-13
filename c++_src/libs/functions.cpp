@@ -4,9 +4,9 @@
 #include <tools/shader.h>
 #include <tools/camera.h>
 
-Camera *theCamera;
+extern Camera camera;
 
-float *theDeltaTime;
+extern float deltaTime;
 
 extern char mode;
 
@@ -33,12 +33,6 @@ void sleep_ms(unsigned long milliseconds) {
 
 #endif
 
-void initFunctions(Camera *aCamera, float *aDeltaTime)
-{
-    theCamera = aCamera;
-    theDeltaTime = aDeltaTime;
-}
-
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
@@ -48,13 +42,13 @@ void processInput(GLFWwindow *window)
     
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
     {
-        theCamera->ProcessKeyboard(LEFT, *theDeltaTime);
-        theCamera->ProcessMouseMovement(*theDeltaTime * 500, 0);
+        camera.ProcessKeyboard(LEFT, deltaTime);
+        camera.ProcessMouseMovement(deltaTime * 500, 0);
     }
     else if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
     {
-        theCamera->ProcessKeyboard(RIGHT, *theDeltaTime);
-        theCamera->ProcessMouseMovement(-(*theDeltaTime) * 500, 0);
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+        camera.ProcessMouseMovement(-(deltaTime) * 500, 0);
     }
     if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
         static bool isFullscreen = false;
@@ -96,7 +90,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    theCamera->ProcessMouseScroll(static_cast<float>(yoffset));
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
 void bindPlanVertices(unsigned int *VAO, unsigned int *VBO, unsigned int *EBO, float vertices[20], unsigned int indices[6])
