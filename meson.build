@@ -1,4 +1,4 @@
-project('OpenGL', 'c', 'cpp', 'rust', version : 'Alpha')
+project('OpenGL', 'c', 'cpp', 'rust', version : 'Stable')
 
 cppDir = 'c++_src/'
 rustDir = 'rustsrc/'
