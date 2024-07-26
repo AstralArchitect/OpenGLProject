@@ -2,5 +2,6 @@ builddir/
 packagecache/
 glfw-*/
 glm-*/
+tinygltf-*/
 horloge.blend1
 .vscode/
