@@ -66,6 +66,33 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
 }
 
+Shader Shader::fromStr(const char* vertexShader, const char* fragmentShader) {
+    Shader out;
+
+    unsigned int vertex, fragment;
+    // vertex shader
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &vertexShader, NULL);
+    glCompileShader(vertex);
+    checkCompileErrors(vertex, "VERTEX");
+    // fragment Shader
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &fragmentShader, NULL);
+    glCompileShader(fragment);
+    checkCompileErrors(fragment, "FRAGMENT");
+    // shader Program
+    out.ID = glCreateProgram();
+    glAttachShader(out.ID, vertex);
+    glAttachShader(out.ID, fragment);
+    glLinkProgram(out.ID);
+    checkCompileErrors(out.ID, "PROGRAM");
+    // delete the shaders as they're linked into our program now and no longer necessary
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
+    return out;
+}
+
 // activate the shader
 // ------------------------------------------------------------------------
 void Shader::use() const

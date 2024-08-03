@@ -10,6 +10,12 @@ extern float deltaTime;
 
 extern char mode;
 
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
+double lastX = SCR_WIDTH / 2.0;
+double lastY = SCR_HEIGHT / 2.0;
+bool firstMouse = true;
+
 #ifdef _WIN32
 #include <windows.h>
 
@@ -77,6 +83,22 @@ void processInput(GLFWwindow *window)
     
 }
 
+void mouse_callback(GLFWwindow * window, double xposIn, double yposIn) {
+    if (firstMouse)
+    {
+        lastX = xposIn;
+        lastY = yposIn;
+        firstMouse = false;
+    }
+
+    float xoffset = xposIn - lastX;
+    float yoffset = lastY - yposIn; // reversed since y-coordinates go from bottom to top
+    lastX = xposIn;
+    lastY = yposIn;
+
+    camera.ProcessMouseMovement(xoffset, yoffset, 1);
+}
+
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -139,6 +161,8 @@ GLFWwindow *createContextAndWindows(const unsigned int SCR_WIDTH, const unsigned
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------

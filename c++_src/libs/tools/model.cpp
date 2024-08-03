@@ -1,7 +1,7 @@
 #include <tools/model.h>
 
 #include <glad/glad.h>
-#include <OpenGlTools/stb_image.h>
+#include <stb_image.h>
 
 unsigned int loadTexture(char const * path)
 {

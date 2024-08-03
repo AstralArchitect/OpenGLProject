@@ -7,10 +7,11 @@
 
 #include <tools/camera.h>
 #include <tools/model.h>
+#include <tools/gltfloader.hpp>
 
 #include <rustlib/main.hpp>
 
-#include "functions.h"
+#include "functions.hpp"
 
 #include <cstdio>
 
@@ -20,9 +21,6 @@ const unsigned int SCR_HEIGHT = 1080;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 2.7f));
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
 
 // timing
 float deltaTime = 0.0f;
@@ -32,6 +30,27 @@ float lastFrame = 0.0f;
 char mode = 0;
 
 glm::vec3 lightPos(1.2f, 1.0f, 1.2f);
+
+const char* vertshade =
+R"(#version 330 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 model;
+uniform mat4 projection;
+
+void main() {
+	gl_Position = projection * model * vec4(aPos, 1.0);
+})";
+
+const char* fragshade =
+R"(#version 330 core
+
+out vec4 FragColor;
+uniform vec3 color;
+
+void main() {
+    FragColor = vec4(color, 1.0);
+})";
 
 int main()
 {
@@ -162,6 +181,11 @@ int main()
     glm::vec3 pointLightPositions[nb_lampes];
     glm::vec3 pointLightColors[nb_lampes];
     
+    GltfModel gltf_model = GltfModel::loadWithPath("./res/cube.glb");
+    Shader gltfshader = Shader::fromStr(vertshade, fragshade);
+
+    std::cout << vertshade << std::endl;
+    std::cout << fragshade << std::endl;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -338,6 +362,17 @@ int main()
         // render the plan
         plan->render();
 
+        gltfshader.use();
+        gltfshader.setMat4("projection", projection);
+
+        model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(5.0f));
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
+        gltfshader.setMat4("model", model);
+        gltfshader.setVec3("color", glm::vec3(0.5f, 0.5f, 0.5f));
+
+        gltf_model.draw();
+
         // also draw the lamp object(s)
         lamp->use();
         lamp->setMat4("projection", projection);
@@ -353,6 +388,15 @@ int main()
             model = glm::scale(model, glm::vec3(0.2f));
             lamp->setMat4("model", model);
             lamp->render();
+        }
+
+        GLenum err = 1;
+        while (err != 0) {
+            if (err != 0 && err != 1) {
+                std::cout << "OpenGL Error occured: " << err << std::endl;
+            }
+
+            err = glGetError();
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)

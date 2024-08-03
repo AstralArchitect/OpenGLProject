@@ -1,4 +1,4 @@
-project('OpenGL', 'c', 'cpp', 'rust', version : 'Stable')
+project('OpenGL', 'c', 'cpp', 'rust', version : 'Stable', default_options: ['cpp_std=c++17'])
 
 cppDir = 'c++_src/'
 rustDir = 'rustsrc/'
@@ -15,7 +15,7 @@ rustlib = static_library('rustlib', rust_sources, rust_abi: 'c')
 cppSources = [cppDir + 'main.cpp']
 OpenGlLibsSources = [OpenGL_lib + 'glad.c']
 personnal_cpp_sources = [personnalCppLibs + 'functions.cpp']
-toolsSources = [toolsDir + 'camera.cpp', toolsDir + 'shader.cpp', toolsDir + 'model.cpp']
+toolsSources = [toolsDir + 'camera.cpp', toolsDir + 'shader.cpp', toolsDir + 'model.cpp', toolsDir + 'gltfloader.cpp']
 
 sources = [cppSources, OpenGlLibsSources, personnal_cpp_sources, toolsSources]
 include_dir = include_directories('Include')
@@ -26,7 +26,7 @@ cmake = import('cmake')
 opt_var = cmake.subproject_options()
 opt_var.add_cmake_defines({
     'TINYGLTF_BUILD_LOADER_EXAMPLE': false,
-    'TINYGLTF_HEADER_ONLY': true,
+    'TINYGLTF_HEADER_ONLY': false,
     'TINYGLTF_INSTALL': false
 })
 
