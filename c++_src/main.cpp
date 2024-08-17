@@ -37,15 +37,17 @@ layout (location = 0) in vec3 aPos;
 
 uniform mat4 model;
 uniform mat4 projection;
+uniform mat4 view;
 
 void main() {
-	gl_Position = projection * model * vec4(aPos, 1.0);
+	gl_Position = model * view * projection * vec4(aPos, 1.0);
 })";
 
 const char* fragshade =
 R"(#version 330 core
 
 out vec4 FragColor;
+
 uniform vec3 color;
 
 void main() {
@@ -183,9 +185,6 @@ int main()
     
     GltfModel gltf_model = GltfModel::loadWithPath("./res/cube.glb");
     Shader gltfshader = Shader::fromStr(vertshade, fragshade);
-
-    std::cout << vertshade << std::endl;
-    std::cout << fragshade << std::endl;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -362,14 +361,17 @@ int main()
         // render the plan
         plan->render();
 
+        // gltf model
+        // ----------
         gltfshader.use();
         gltfshader.setMat4("projection", projection);
 
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(5.0f));
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
+        //model = glm::scale(model, glm::vec3(1.0f));
+        //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
         gltfshader.setMat4("model", model);
-        gltfshader.setVec3("color", glm::vec3(0.5f, 0.5f, 0.5f));
+        gltfshader.setMat4("view", view);
+        gltfshader.setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
 
         gltf_model.draw();
 
