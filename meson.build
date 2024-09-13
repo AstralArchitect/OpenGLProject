@@ -1,16 +1,12 @@
-project('OpenGL', 'c', 'cpp', 'rust', version : 'Stable', default_options: ['cpp_std=c++17'])
+project('OpenGL', 'c', 'cpp', version : 'Alpha', default_options: ['cpp_std=c++17'])
 
-cppDir = 'c++_src/'
-rustDir = 'rustsrc/'
+cppDir = 'src/'
 
 personnalCppLibs = cppDir + 'libs/'
 
 toolsDir = personnalCppLibs + 'tools/'
 
-OpenGL_lib = 'c++_src/OpenGL_libs/'
-
-rust_sources = [rustDir + 'lib.rs']
-rustlib = static_library('rustlib', rust_sources, rust_abi: 'c')
+OpenGL_lib = cppDir + 'OpenGL_libs/'
 
 cppSources = [cppDir + 'main.cpp']
 OpenGlLibsSources = [OpenGL_lib + 'glad.c']
@@ -33,4 +29,4 @@ opt_var.add_cmake_defines({
 tinygltf = cmake.subproject('tinygltf', options: opt_var)
 tinygltf_dep = tinygltf.dependency('tinygltf')
 
-executable('main', sources: sources, include_directories: include_dir, dependencies: [glfw_dep, glm_dep, tinygltf_dep], link_with: rustlib)
+executable('main', sources: sources, include_directories: include_dir, dependencies: [glfw_dep, glm_dep, tinygltf_dep])

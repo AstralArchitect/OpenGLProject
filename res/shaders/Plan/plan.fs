@@ -27,15 +27,13 @@ struct PointLight {
     vec3 specular;
 };
 
-uniform int nb_lampes;
-
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
 
 uniform vec3 viewPos;
 uniform DirLight dirLight;
-uniform PointLight pointLights[100];
+uniform PointLight pointLight;
 uniform Material material;
 
 // function prototypes
@@ -57,8 +55,7 @@ void main()
     // phase 1: directional lighting
     vec3 result = CalcDirLight(dirLight, norm, viewDir);
     // phase 2: point lights
-    for(int i = 0; i < nb_lampes; i++)
-        result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);
+    result += CalcPointLight(pointLight, norm, FragPos, viewDir);
     
     FragColor = vec4(result, 1.0);
 }
