@@ -12,6 +12,7 @@
 #include "functions.hpp"
 
 #include <cstdio>
+#include <numbers>
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -215,7 +216,7 @@ int main()
         plan->setFloat("material.shininess", 16.0f);
 
         //set the light positions
-        float angle = M_PI;
+        float angle = (float)std::numbers::pi;
         pointLightPosition.x = cos(angle + (glfwGetTime() / 1.0f));
         pointLightPosition.z = sin(angle + (glfwGetTime() / 1.0f));
         pointLightPosition.y = 0.5f;
