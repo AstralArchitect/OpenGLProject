@@ -12,7 +12,6 @@
 #include "functions.hpp"
 
 #include <cstdio>
-#include <numbers>
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -161,14 +160,6 @@ int main()
     plan->setVec3("pointLight.ambient", pointLightColor * glm::vec3(0.1));
     plan->setVec3("pointLight.diffuse", pointLightColor);
     plan->setVec3("pointLight.specular", pointLightColor);
-    plan->setFloat("pointLight.constant", 1.0f);
-    plan->setFloat("pointLight.linear", 0.045);
-    plan->setFloat("pointLight.quadratic", 0.0075);
-
-    // directional light
-    plan->setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
-    plan->setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-    plan->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
     
     GltfModel gltf_model = GltfModel::loadWithPath("./res/models/cube.glb");
     Shader gltfshader = Shader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
@@ -179,7 +170,6 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
 
     // Allocate data for the buffer
-    // flemme de mettre les valeurs, je te laisse t'en occuper
     struct LightVars
     {
         glm::vec3 pos;
@@ -188,10 +178,6 @@ int main()
         glm::vec3 specular;
     };
     LightVars light;
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3), &light, GL_STATIC_DRAW);
-
-    // Map the buffer to a uniform block
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, buffer);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -207,7 +193,7 @@ int main()
 
         // render
         // ------
-        glClearColor(0.003f, 0.003f, 0.003f, 1.0f);
+        glClearColor(0.503f, 0.003f, 0.003f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // be sure to activate shader when setting uniforms/drawing objects
@@ -216,10 +202,19 @@ int main()
         plan->setFloat("material.shininess", 16.0f);
 
         //set the light positions
-        float angle = (float)std::numbers::pi;
+        float angle = M_PI;
         pointLightPosition.x = cos(angle + (glfwGetTime() / 1.0f));
         pointLightPosition.z = sin(angle + (glfwGetTime() / 1.0f));
         pointLightPosition.y = 0.5f;
+
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    // light pos buffer
+    // ----------------
+    light = {pointLightPosition, glm::vec3(pointLightColor * glm::vec3(0.1f)), pointLightColor, pointLightColor};
+    glBufferData(GL_ARRAY_BUFFER, sizeof(LightVars), &light, GL_STATIC_DRAW);
+
+    // Map the buffer to a uniform block
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, buffer);
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
