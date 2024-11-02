@@ -1,4 +1,4 @@
-project('OpenGL', 'c', 'cpp', version : 'Alpha', default_options: ['cpp_std=c++17'])
+project('OpenGL', 'c', 'cpp', version : 'Alpha', default_options: ['cpp_std=c++20'])
 
 cppDir = 'src/'
 

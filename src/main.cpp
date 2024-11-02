@@ -171,7 +171,6 @@ int main()
     
     GltfModel gltf_model = GltfModel::loadWithPath("./res/models/cube.glb");
     Shader gltfshader = Shader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
-
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic

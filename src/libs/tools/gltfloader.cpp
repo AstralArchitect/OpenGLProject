@@ -1,5 +1,6 @@
 #include <tools/gltfloader.hpp>
 
+#include <cstdio>
 #include <iostream>
 
 #include <glad/glad.h>
@@ -18,15 +19,15 @@ GltfModel GltfModel::loadWithPath(const char* filename) {
 
     bool res = loader.LoadBinaryFromFile(&model, &err, &warn, filename);
     if (!warn.empty()) {
-        std::cout << "[Gltf] WARN: " << warn << std::endl;
+        printf("[Gltf] WARN: %s\n", warn);
     }
 
     if (!err.empty()) {
-        std::cout << "[Gltf] ERR: " << err << std::endl;
+        printf("[Gltf] ERR: %s\n", err);
     }
 
-    if (!res) std::cout << "Failed to load glTF: " << filename << std::endl;
-    else std::cout << "Loaded glTF: " << filename << std::endl;
+    if (!res) printf("Failed to load glTF: %s\n", filename);
+    else printf("Loaded glTF: %s\n", filename);
 
     const tinygltf::Scene &scene = model.scenes[model.defaultScene];
     std::vector<GltfNode> loaded_nodes;
@@ -76,7 +77,7 @@ GltfMesh::GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh) {
     for (const tinygltf::Primitive &prim : mesh.primitives) {
         GLuint vao = 0;
         glGenVertexArrays(1, &vao);
-        std::cout << "VAO num: " << vao << std::endl;
+        printf("VAO num: %lu\n", vao);
         glBindVertexArray(vao);
 
         typedef struct {
@@ -107,17 +108,17 @@ GltfMesh::GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh) {
 
             if (attr.first.compare("POSITION") == 0) {
                 pos_buf_opt = std::optional(BufferInfos { accessor, buffer_view, buffer });
-                std::cout << "model has positions" << std::endl;
+                printf("model has positions\n");
             } else if (attr.first.compare("NORMAL") == 0) {
                 normal_buf = std::optional(BufferInfos { accessor, buffer_view, buffer });
                 stride += 3;
-                std::cout << "model has normals" << std::endl;
+                printf("model has normals\n");
             } else if (attr.first.compare("TEXCOORD_0") == 0) {
                 texcoord_buf = std::optional(BufferInfos { accessor, buffer_view, buffer });
                 stride += 2;
-                std::cout << "model has tex coords" << std::endl;
+                printf("model has tex coords\n");
             } else {
-                std::cout << "[Gltf] Unsupported attributes found in model: " << attr.first << " -> Skipping !" << std::endl;
+                printf("[Gltf] Unsupported attributes found in model: %d -> Skipping !\n",  attr.first);
                 continue;
             }
         }
@@ -138,7 +139,7 @@ GltfMesh::GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh) {
             glEnableVertexAttribArray(2);
         }
 
-        std::cout << "Vertex count: " << pos_buf.accessor.count << std::endl;
+        printf("Vertex count: %d\n", pos_buf.accessor.count);
 
         std::vector<unsigned char> final_buffer;
         for (int idx = 0; idx < pos_buf.accessor.count; idx++) {
@@ -165,39 +166,7 @@ GltfMesh::GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh) {
             }
         }
 
-        if (final_buffer.size() % sizeof(float) == 0) {
-            std::cout << "Final Buf: [";
-            
-            float * ptr = (float*)final_buffer.data();
-            for (int cnt = 0; cnt < final_buffer.size() / sizeof(float); cnt++) {
-                std::cout << *ptr << ", ";
-                ptr++;
-            }
-
-            std::cout << std::endl;
-        } else {
-            std::cout << "Can't print buffer: anormal size" << std::endl;
-        }
-
         glBufferData(GL_ARRAY_BUFFER, final_buffer.size(), final_buffer.data(), GL_STATIC_DRAW);
-
-        float * fptr = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, final_buffer.size(), GL_MAP_READ_BIT);
-
-        unsigned short counter = 0;
-
-        std::cout << "Final Buf (GPU MEM):";
-        for (int cnt = 0; cnt < final_buffer.size() / sizeof(float); cnt++) {
-            if (cnt % stride == 0) {
-                std::cout << std::endl << counter << ": ";
-                counter++;
-            }
-            std::cout << *fptr << ", ";
-            fptr++;
-        }
-
-        std::cout << std::endl;
-
-        glUnmapBuffer(GL_ARRAY_BUFFER);
 
         GLuint ebo;
         glGenBuffers(1, &ebo);
@@ -212,37 +181,11 @@ GltfMesh::GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh) {
         assert((indices_buffer_view.buffer >= 0) && (indices_buffer_view.buffer < root.buffers.size()));
         tinygltf::Buffer indices_buffer = root.buffers[indices_buffer_view.buffer];
 
-        std::cout << "Indices buffer (" << indices_buffer_view.byteLength / sizeof(unsigned short) << "): ";
-
-        unsigned char * ptr = indices_buffer.data.data();
-        ptr += indices_buffer_view.byteOffset;
-        unsigned short * sptr = (unsigned short *)ptr;
-        for (unsigned short cnt = 0; cnt < indices_buffer_view.byteLength / sizeof(unsigned short); cnt++) {
-            std::cout << *sptr << ", ";
-            sptr++;
-        }
-        std::cout << std::endl;
-
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_buffer_view.byteLength, indices_buffer.data.data() + indices_buffer_view.byteOffset, GL_STATIC_DRAW);
-        
-        unsigned short * iptr = (unsigned short*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, indices_buffer_view.byteLength, GL_MAP_READ_BIT);
-
-        std::cout << "indices (GPU MEM): [";
-        for (int cnt = 0; cnt < indices_buffer_view.byteLength / sizeof(unsigned short); cnt++) {
-            std::cout << *iptr << ", ";
-            iptr++;
-        }
-
-        glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-
-        std::cout << std::endl;
 
         glBindVertexArray(0);
 
-        std::cout << "Primitive: VAO: " << vao << " Write mode: " << prim.mode << " Vertex Number: " << indices_accessor.count << std::endl;
-
         primitives.push_back(std::tuple(vao, prim.mode, indices_accessor.count));
-        std::cout << "Comp type: " << indices_accessor.componentType << std::endl;
     }
 }
 
@@ -261,19 +204,7 @@ void print_tuple(const std::tuple<T...> &tuple_to_print) {
 
 void GltfMesh::draw() {
     for (const auto &prim: this->primitives) {
-        //std::cout << "Drawing with: ";
-        //print_tuple(prim);
         glBindVertexArray(std::get<0>(prim));
-
-        /*unsigned short* iptr = (unsigned short*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(unsigned short), GL_MAP_READ_BIT);
-        float* vptr = (float *)glMapBufferRange(GL_ARRAY_BUFFER, 0, sizeof(float), GL_MAP_READ_BIT);
-
-        std::cout << "Generated pointers" << std::endl;
-
-        std::cout << "First indice: " << *iptr << std::endl << "First Vertex Info: " << *vptr << std::endl;
-
-        glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-        glUnmapBuffer(GL_ARRAY_BUFFER);*/
 
         glDrawElements(std::get<1>(prim), std::get<2>(prim), GL_UNSIGNED_SHORT, (void*)0);
         glBindVertexArray(0);
