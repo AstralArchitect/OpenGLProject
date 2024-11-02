@@ -172,26 +172,6 @@ int main()
     GltfModel gltf_model = GltfModel::loadWithPath("./res/models/cube.glb");
     Shader gltfshader = Shader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
 
-    // Create a buffer object
-    GLuint buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-
-    // Allocate data for the buffer
-    // flemme de mettre les valeurs, je te laisse t'en occuper
-    struct LightVars
-    {
-        glm::vec3 pos;
-        glm::vec3 ambient;
-        glm::vec3 diffuse;
-        glm::vec3 specular;
-    };
-    LightVars light;
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3), &light, GL_STATIC_DRAW);
-
-    // Map the buffer to a uniform block
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, buffer);
-
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -215,7 +195,7 @@ int main()
         plan->setFloat("material.shininess", 16.0f);
 
         //set the light positions
-        float angle = M_PI;
+        float angle = 3.14149265;
         pointLightPosition.x = cos(angle + (glfwGetTime() / 1.0f));
         pointLightPosition.z = sin(angle + (glfwGetTime() / 1.0f));
         pointLightPosition.y = 0.5f;
