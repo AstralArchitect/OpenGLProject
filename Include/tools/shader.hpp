@@ -12,7 +12,9 @@ public:
     unsigned int ID;
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
-    Shader(const char* vertexPath, const char* fragmentPath);
+    Shader(std::string const& vertexPath, std::string const& fragmentPath);
+    // constructeur avec spé du dossier (strings moins long)
+    Shader(std::string const& folder, std::string vertexName, std::string fragmentName);
 
     // Ouais ptit constructeur avec la syntax dégueulasse du C++ toi même tu sais
     Shader(): ID(0) {};

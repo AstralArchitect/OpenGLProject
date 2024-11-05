@@ -1,14 +1,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <tools/shader.h>
-#include <tools/camera.h>
+#include <tools/shader.hpp>
+#include <tools/camera.hpp>
 
 extern Camera camera;
 
 extern float deltaTime;
-
-extern char mode;
 
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -71,15 +69,6 @@ void processInput(GLFWwindow *window)
         isFullscreen = !isFullscreen;
         sleep_ms(500);
     }
-    if (glfwGetKey(window, GLFW_KEY_F1) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
-    {
-        mode++;
-        if (mode > 4)
-        {
-            mode = 0;
-        }
-        sleep_ms(250);
-    }
     
 }
 
@@ -113,28 +102,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
-}
-
-void bindPlanVertices(unsigned int *VAO, unsigned int *VBO, unsigned int *EBO, float vertices[20], unsigned int indices[6])
-{
-    glGenVertexArrays(1, VAO);
-    glGenBuffers(1, VBO);
-    glGenBuffers(1, EBO);
-
-    glBindVertexArray(*VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, *VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 32, vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * 8, indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
 }
 
 GLFWwindow *createContextAndWindows(const unsigned int SCR_WIDTH, const unsigned int SCR_HEIGHT, char *WindowTitle, char *error)

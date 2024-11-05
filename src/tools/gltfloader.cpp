@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include <glad/glad.h>
-#include <functions.hpp>
+#include <callbacks.hpp>
 
 #define btogl(x) x ? GL_TRUE : GL_FALSE
 #define tget(x, y) std::get<x>(y)

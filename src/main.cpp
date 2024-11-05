@@ -5,11 +5,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <tools/camera.h>
-#include <tools/model.h>
+#include <tools/camera.hpp>
+#include <tools/shader.hpp>
 #include <tools/gltfloader.hpp>
 
-#include "functions.hpp"
+#include "callbacks.hpp"
 
 #include <cstdio>
 
@@ -23,11 +23,6 @@ Camera camera(glm::vec3(0.0f, 0.0f, 2.7f));
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
-//light mode
-char mode = 0;
-
-glm::vec3 lightPos(1.2f, 1.0f, 1.2f);
 
 int main()
 {
@@ -135,14 +130,14 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    Model *lamp = new Model("res/shaders/LightCube/vertex.vs", "res/shaders/LightCube/fragment.fs", lightCubeVAO, LightCubeVBO, 36, SCR_WIDTH, SCR_HEIGHT, NULL, 0);
+    Shader lightShader = Shader("./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
 
     char* texturePaths[2] = {
         (char*)"res/bois.jpg",
         (char*)"res/bois_specular.jpg"
     };
 
-    Model *plan = new Model("./res/shaders/Plan/plan.vs", "./res/shaders/Plan/plan.fs", planVAO, planVBO, 6, SCR_WIDTH, SCR_HEIGHT, texturePaths, 2);
+    Shader planShader = Shader("./res/shaders/plan/plan.vs", "./res/shaders/plan/plan.fs");
 
     //shader configuration
     plan->use();
@@ -171,6 +166,7 @@ int main()
     
     GltfModel gltf_model = GltfModel::loadWithPath("./res/models/cube.glb");
     Shader gltfshader = Shader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
+    
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -255,9 +251,6 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-
-    delete plan;
-    delete lamp;
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
