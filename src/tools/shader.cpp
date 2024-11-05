@@ -156,6 +156,10 @@ void Shader::use() const
 { 
     glUseProgram(ID); 
 }
+void Shader::unuse() const
+{
+    glUseProgram(0);
+}
 
 // utility uniform functions
 // ------------------------------------------------------------------------

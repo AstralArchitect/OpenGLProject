@@ -139,34 +139,29 @@ int main()
 
     Shader planShader = Shader("./res/shaders/plan/plan.vs", "./res/shaders/plan/plan.fs");
 
-    //shader configuration
-    plan->use();
-    plan->setInt("material.diffuse", 0);
-    plan->setInt("material.specular", 1);
-
-    glm::vec3 pointLightPosition;
+    GLuint planTexts[2] = {loadTexture(texturePaths[0]), loadTexture(texturePaths[1])};
     glm::vec3 pointLightColor = glm::vec3(1.0f);
+    planShader.use();
+    planShader.setInt("colorMap", 0);
+    planShader.setInt("specMap", 1);
 
-    //directionnal light direction
-    plan->setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        
-    // point light
-    plan->setVec3("pointLight.position", pointLightPosition);
-    plan->setVec3("pointLight.ambient", pointLightColor * glm::vec3(0.1));
-    plan->setVec3("pointLight.diffuse", pointLightColor);
-    plan->setVec3("pointLight.specular", pointLightColor);
-    plan->setFloat("pointLight.constant", 1.0f);
-    plan->setFloat("pointLight.linear", 0.045);
-    plan->setFloat("pointLight.quadratic", 0.0075);
-
-    // directional light
-    plan->setVec3("dirLight.ambient", 0.5f, 0.5f, 0.5f);
-    plan->setVec3("dirLight.diffuse", 0.5f, 0.5f, 0.5f);
-    plan->setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+    // point light attributes
+    planShader.setVec3("ambient", pointLightColor * glm::vec3(0.1));
+    planShader.setVec3("diffuse", pointLightColor);
+    planShader.setVec3("specular", pointLightColor);
+    planShader.setFloat("pointLight.constant", 1.0f);
+    planShader.setFloat("pointLight.linear", 0.045);
+    planShader.setFloat("pointLight.quadratic", 0.0075);
     
     GltfModel gltf_model = GltfModel::loadWithPath("./res/models/cube.glb");
     Shader gltfshader = Shader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
+    // create the model texture
+    unsigned int texture = loadTexture(texturePaths[0]);
+    gltfshader.use();
+    gltfshader.setInt("tex", 2);
     
+    // render loop
+    // -----------
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -179,63 +174,87 @@ int main()
         // -----
         processInput(window);
 
-        // render
-        // ------
+        // render attributes
+        // -----------------
         glClearColor(0.003f, 0.003f, 0.003f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // be sure to activate shader when setting uniforms/drawing objects
-        plan->use();
-        plan->setVec3("viewPos", camera.Position);
-        plan->setFloat("material.shininess", 16.0f);
-
-        //set the light positions
-        float angle = 3.14149265;
-        pointLightPosition.x = cos(angle + (glfwGetTime() / 1.0f));
-        pointLightPosition.z = sin(angle + (glfwGetTime() / 1.0f));
-        pointLightPosition.y = 0.5f;
-
-        // view/projection transformations
+        // view/projection/world transformations
+        // -------------------------------
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        plan->setMat4("projection", projection);
-        plan->setMat4("view", view);
+        glm::mat4 model;
+
+        // bind textures on corresponding texture units
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, planTexts[0]);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, planTexts[1]);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        // The plan object
+        // ---------------
+        planShader.use();
+        planShader.setVec3("viewPos", camera.Position);
+        planShader.setMat4("projection", projection);
+        planShader.setMat4("view", view);
+
+        //set the light positions
+        float angle = 3.14;
+        glm::vec3 pointLightPosition = {cos(angle + (glfwGetTime() / 1.0f)), 0.5, sin(angle + (glfwGetTime() / 1.0f))};
+
+        planShader.setVec3("lightPos", pointLightPosition);
 
         // world transformation
-        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
-        plan->setMat4("model", model);
+        planShader.setMat4("model", model);
 
         // render the plan
-        plan->render();
+        glBindVertexArray(planVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // unbind shader and VAO
+        glBindVertexArray(0);
+        planShader.unuse();
 
         // gltf model
         // ----------
         gltfshader.use();
         gltfshader.setMat4("projection", projection);
+        gltfshader.setMat4("view", view);
 
+        // world transformation
         model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(0.5f));
-
         gltfshader.setMat4("model", model);
-        gltfshader.setMat4("view", view);
+
         gltfshader.setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
 
+        // draw
         gltf_model.draw();
 
-        // also draw the lamp object
-        lamp->use();
-        lamp->setMat4("projection", projection);
-        lamp->setMat4("view", view);
+        // Light object
+        // ------------
+        lightShader.use();
+        lightShader.setMat4("projection", projection);
+        lightShader.setMat4("view", view);
 
-        // we now draw as many light cubes as we have point lights.
-        glBindVertexArray(lightCubeVAO);
-        lamp->setVec3("color", pointLightColor);
         model = glm::mat4(1.0f);
         model = glm::translate(model, pointLightPosition);
         model = glm::scale(model, glm::vec3(0.2f));
-        lamp->setMat4("model", model);
-        lamp->render();
+        lightShader.setMat4("model", model);
+        
+        lightShader.setVec3("color", pointLightColor);
+
+        // render
+        glBindVertexArray(lightCubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // unbinde shader & VAO
+        glBindVertexArray(0);
+        lightShader.unuse();
 
         GLenum err = 1;
         while (err != 0) {
