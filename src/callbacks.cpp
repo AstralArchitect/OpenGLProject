@@ -3,6 +3,7 @@
 
 #include <tools/shader.hpp>
 #include <tools/camera.hpp>
+#include <callbacks.hpp>
 
 #include <stb_image.h>
 
@@ -41,7 +42,7 @@ void sleep_ms(unsigned long milliseconds) {
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window)
+void Callback::processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -74,7 +75,7 @@ void processInput(GLFWwindow *window)
     
 }
 
-void mouse_callback(GLFWwindow * window, double xposIn, double yposIn) {
+void Callback::mouse(GLFWwindow * window, double xposIn, double yposIn) {
     if (firstMouse)
     {
         lastX = xposIn;
@@ -92,7 +93,7 @@ void mouse_callback(GLFWwindow * window, double xposIn, double yposIn) {
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void Callback::framebuffer_size(GLFWwindow* window, int width, int height)
 {
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
@@ -101,7 +102,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void Callback::scroll(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
@@ -128,9 +129,9 @@ GLFWwindow *createContextAndWindows(const unsigned int SCR_WIDTH, const unsigned
         return NULL;
     }
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetFramebufferSizeCallback(window, Callback::framebuffer_size);
+    glfwSetScrollCallback(window, Callback::scroll);
+    glfwSetCursorPosCallback(window, Callback::mouse);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers

@@ -24,6 +24,8 @@ Camera camera(glm::vec3(0.0f, 0.0f, 2.7f));
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader);
+
 int main()
 {
     // glfw window creation
@@ -144,14 +146,6 @@ int main()
     planShader.use();
     planShader.setInt("colorMap", 0);
     planShader.setInt("specMap", 1);
-
-    // point light attributes
-    planShader.setVec3("ambient", pointLightColor * glm::vec3(0.1));
-    planShader.setVec3("diffuse", pointLightColor);
-    planShader.setVec3("specular", pointLightColor);
-    planShader.setFloat("pointLight.constant", 1.0f);
-    planShader.setFloat("pointLight.linear", 0.045);
-    planShader.setFloat("pointLight.quadratic", 0.0075);
     
     GltfModel gltf_model = GltfModel::loadWithPath("./res/models/cube.glb");
     Shader gltfshader = Shader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
@@ -172,7 +166,7 @@ int main()
 
         // input
         // -----
-        processInput(window);
+        Callback::processInput(window);
 
         // render attributes
         // -----------------
@@ -204,7 +198,7 @@ int main()
         float angle = 3.14;
         glm::vec3 pointLightPosition = {cos(angle + (glfwGetTime() / 1.0f)), 0.5, sin(angle + (glfwGetTime() / 1.0f))};
 
-        planShader.setVec3("lightPos", pointLightPosition);
+        setPointLight(pointLightPosition, planShader);
 
         // world transformation
         model = glm::mat4(1.0f);
@@ -275,4 +269,21 @@ int main()
     // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
+}
+
+void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader)
+{
+    // directional light
+    lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+    lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+    lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+    lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+    // point light
+    lightingShader.setVec3("light.pos", lightPos);
+    lightingShader.setVec3("light.ambient", 0.05f, 0.05f, 0.05f);
+    lightingShader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
+    lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+    lightingShader.setFloat("light.constant", 1.0f);
+    lightingShader.setFloat("light.linear", 0.09f);
+    lightingShader.setFloat("light.quadratic", 0.032f);
 }
