@@ -9,16 +9,23 @@
 class Shader
 {
 public:
-    unsigned int ID;
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
-    Shader(const char* vertexPath, const char* fragmentPath);
+    Shader(std::string const& vertexPath, std::string const& fragmentPath);
+    // constructeur avec spé du dossier (strings moins long)
+    Shader(std::string const& folder, std::string vertexName, std::string fragmentName);
+
+    // Ouais ptit constructeur avec la syntax dégueulasse du C++ toi même tu sais
+    Shader(): ID(0) {};
+
+    static Shader fromStr(const char* vertexShader, const char* fragmentShader);
 
     void paths(const char* vertexPath, const char* fragmentPath);
 
     // activate the shader
     // ------------------------------------------------------------------------
     void use() const;
+    void unuse() const;
     // utility uniform functions
     // ------------------------------------------------------------------------
     void setBool(const std::string &name, bool value) const;
@@ -45,5 +52,8 @@ public:
 private:
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
-    void checkCompileErrors(GLuint shader, std::string type);
+    static void checkCompileErrors(GLuint shader, std::string type);
+    // ID of the shader
+    // ----------------
+    unsigned int ID;
 };

@@ -1,4 +1,4 @@
-#include <tools/camera.h>
+#include <tools/camera.hpp>
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
