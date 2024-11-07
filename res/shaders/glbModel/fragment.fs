@@ -9,6 +9,7 @@ in vec3 normals;
 uniform sampler2D tex;
 
 void main() { 
-    vec4 result = texture(tex, TexCoords);
-    FragColor = vec4(result);
+    vec3 result = texture(tex, TexCoords).rgb;
+    result = pow(result, vec3(1.0/2.2));
+    FragColor = vec4(result, 1.0);
 }

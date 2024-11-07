@@ -46,15 +46,15 @@ int main()
     }
 
     float planVertices[]{
-        // positions          // texture coords //normals
+        // positions          // normal            // texture coords
         //first triangle
-        -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,      1.0f, 0.0f, -1.0f,
-         0.5f, -0.5f, -0.5f,   4.0f, 0.0f,      1.0f, 0.0f, -1.0f,
-        -0.5f, -0.5f,  0.5f,   0.0f, 4.0f,      1.0f, 0.0f, -1.0f,
-        //second triangle
-        -0.5f, -0.5f,  0.5f,   0.0f, 4.0f,      1.0f, 0.0f, -1.0f,
-         0.5f, -0.5f,  0.5f,   4.0f, 4.0f,      1.0f, 0.0f, -1.0f,
-         0.5f, -0.5f, -0.5f,   4.0f, 0.0f,      1.0f, 0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  4.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  4.0f,  4.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  4.0f,  0.0f,
+        // second triangle
+         0.5f, -0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  4.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  4.0f
     };
     unsigned int planVBO, planVAO;
 
@@ -68,9 +68,9 @@ int main()
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     float lightCubeVertices[]{
@@ -141,8 +141,8 @@ int main()
 
     Shader planShader = Shader("./res/shaders/plan/plan.vs", "./res/shaders/plan/plan.fs");
 
-    GLuint planTexts[2] = {loadTexture(texturePaths[0]), loadTexture(texturePaths[1])};
-    glm::vec3 pointLightColor = glm::vec3(1.0f);
+    GLuint planTexts[2] = {loadTexture(texturePaths[0], true), loadTexture(texturePaths[1], false)};
+    glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
     planShader.use();
     planShader.setInt("colorMap", 0);
     planShader.setInt("specMap", 1);
@@ -150,10 +150,9 @@ int main()
     GltfModel gltf_model = GltfModel::loadWithPath("./res/models/cube.glb");
     Shader gltfshader = Shader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
     // create the model texture
-    unsigned int texture = loadTexture(texturePaths[0]);
     gltfshader.use();
-    gltfshader.setInt("tex", 2);
-    
+    gltfshader.setInt("tex", 0);
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -170,7 +169,7 @@ int main()
 
         // render attributes
         // -----------------
-        glClearColor(0.003f, 0.003f, 0.003f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // view/projection/world transformations
@@ -184,8 +183,6 @@ int main()
         glBindTexture(GL_TEXTURE_2D, planTexts[0]);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, planTexts[1]);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, texture);
 
         // The plan object
         // ---------------
@@ -284,6 +281,6 @@ void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader)
     lightingShader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
     lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
     lightingShader.setFloat("light.constant", 1.0f);
-    lightingShader.setFloat("light.linear", 0.09f);
-    lightingShader.setFloat("light.quadratic", 0.032f);
+    lightingShader.setFloat("light.linear", 0.045f);
+    lightingShader.setFloat("light.quadratic", 0.075f);
 }
