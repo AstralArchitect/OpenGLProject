@@ -76,7 +76,7 @@ void GltfNode::draw() {
 
 GltfMesh::GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh) {
     for (const tinygltf::Primitive &prim : mesh.primitives) {
-        primitives.push_back(GltfPrimitive::GltfPrimitive(root, prim));
+        primitives.push_back(GltfPrimitive(root, prim));
     }
 }
 
@@ -276,7 +276,7 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     assert((prim.material >= 0) && (prim.material < root.materials.size()));
     tinygltf::Material mat = root.materials[prim.material];
 
-    material = GltfMaterial::GltfMaterial(root, mat);
+    material = GltfMaterial(root, mat);
 
     draw_mode = prim.mode;
     vertex_count = indices_accessor.count;
