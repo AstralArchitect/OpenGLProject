@@ -272,9 +272,8 @@ void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader)
 {
     // directional light
     lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-    lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-    lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-    lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+    lightingShader.setVec3("dirLight.diffuse", .1f, 0.1f, 0.1f);
+    lightingShader.setVec3("dirLight.specular", .0f, .0f, .0f);
     // point light
     lightingShader.setVec3("light.pos", lightPos);
     lightingShader.setVec3("light.ambient", 0.05f, 0.05f, 0.05f);

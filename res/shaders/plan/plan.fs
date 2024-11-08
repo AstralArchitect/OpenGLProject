@@ -16,7 +16,6 @@ struct PointLight {
 struct DirLight {
     vec3 direction;
 	
-    vec3 ambient;
     vec3 diffuse;
     vec3 specular;
 };
@@ -81,8 +80,7 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir)
     // specular shading
     float spec = pow(max(dot(viewDir, halfwayDir), 0.0), SHININESS);
     // combine results
-    vec3 ambient = light.ambient * vec3(texture(colorMap, TexCoords));
     vec3 diffuse = light.diffuse * diff * vec3(texture(colorMap, TexCoords));
     vec3 specular = light.specular * spec * vec3(texture(specMap, TexCoords));
-    return (ambient + diffuse + specular);
+    return (diffuse + specular);
 }
