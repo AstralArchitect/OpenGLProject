@@ -24,6 +24,8 @@ Camera camera(glm::vec3(0.0f, 0.0f, 2.7f));
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+const double PI = 3.14159265358979323846264338328;
+
 void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader);
 
 int main()
