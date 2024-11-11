@@ -1,4 +1,4 @@
-project('OpenGL', 'c', 'cpp', version : 'Stable (pre-release)')
+project('OpenGL', 'c', 'cpp', version : 'pre-release')
 
 cppDir = 'src/'
 
