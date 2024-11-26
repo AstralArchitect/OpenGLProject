@@ -20,11 +20,11 @@ GltfModel GltfModel::loadWithPath(const char* filename) {
 
     bool res = loader.LoadBinaryFromFile(&model, &err, &warn, filename);
     if (!warn.empty()) {
-        printf("[Gltf] WARN: %s\n", warn);
+        printf("[Gltf] WARN: %s\n", warn.c_str());
     }
 
     if (!err.empty()) {
-        printf("[Gltf] ERR: %s\n", err);
+        printf("[Gltf] ERR: %s\n", err.c_str());
     }
 
     if (!res) printf("Failed to load glTF: %s\n", filename);
@@ -106,8 +106,6 @@ GLuint load_texture_to_gpu(tinygltf::Model &root, tinygltf::TextureInfo texinfo)
     assert((gltftex.source >= 0) && (gltftex.source < root.images.size()));
     tinygltf::Image image = root.images[gltftex.source];
 
-    std::for_each_n(image.image.cbegin(), 10, [](const unsigned char &el) {printf("%hhu, ", el);});
-
     assert((gltftex.sampler >= 0) && (gltftex.sampler < root.textures.size()));
     tinygltf::Sampler sampler = root.samplers[gltftex.sampler];
 
@@ -123,24 +121,21 @@ GLuint load_texture_to_gpu(tinygltf::Model &root, tinygltf::TextureInfo texinfo)
             tex_bits = GL_RGBA8;
             break;
         default:
-            printf("%d components isn't supported right now");
+            printf("%d components isn't supported right now", image.component);
             throw -1;
     }
 
     assert(image.as_is == false);
 
-    printf("Uploading to GPU\n");
     GLuint gputex;
     glGenTextures(1, &gputex);
     glBindTexture(GL_TEXTURE_2D, gputex);
-    glTexImage2D(GL_TEXTURE_2D, 0, tex_components, image.width, image.height, 0, tex_components, image.pixel_type, &image.image);
+    glTexImage2D(GL_TEXTURE_2D, 0, tex_components, image.width, image.height, 0, tex_components, image.pixel_type, image.image.data());
     glGenerateMipmap(GL_TEXTURE_2D);
-    printf("Uploading parameters...");
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, sampler.wrapS);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, sampler.wrapT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sampler.minFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sampler.magFilter);
-    printf("Upload finished !");
 
     return gputex;
 }
@@ -206,7 +201,7 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
             stride += 2;
             printf("model has tex coords\n");
         } else {
-            printf("[Gltf] Unsupported attributes found in model: %d -> Skipping !\n",  attr.first);
+            printf("[Gltf] Unsupported attributes found in model: %s -> Skipping !\n",  attr.first.c_str());
             continue;
         }
     }
