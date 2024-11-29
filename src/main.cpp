@@ -144,7 +144,6 @@ int main()
     Shader planShader = Shader("./res/shaders/plan/plan.vs", "./res/shaders/plan/plan.fs");
 
     GLuint planTexts[2] = {loadTexture(texturePaths[0], true), loadTexture(texturePaths[1], false)};
-    glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
     planShader.use();
     planShader.setInt("colorMap", 0);
     planShader.setInt("specMap", 1);
@@ -260,7 +259,7 @@ int main()
         model = glm::scale(model, glm::vec3(0.2f));
         lightShader.setMat4("model", model);
         
-        lightShader.setVec3("color", pointLightColor);
+        lightShader.setVec3("color", 1.0f, 1.0f, 1.0f);
 
         // render
         glBindVertexArray(lightCubeVAO);
