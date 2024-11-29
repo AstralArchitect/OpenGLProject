@@ -137,8 +137,8 @@ int main()
     Shader lightShader = Shader("./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
 
     char* texturePaths[2] = {
-        (char*)"res/bois.jpg",
-        (char*)"res/bois_specular.jpg"
+        (char*)"res/textures/bois.jpg",
+        (char*)"res/textures/bois_specular.jpg"
     };
 
     Shader planShader = Shader("./res/shaders/plan/plan.vs", "./res/shaders/plan/plan.fs");
@@ -149,11 +149,32 @@ int main()
     planShader.setInt("colorMap", 0);
     planShader.setInt("specMap", 1);
     
-    GltfModel gltf_model = GltfModel::loadWithPath("./res/models/cube.glb");
+    GltfModel gltf_model = GltfModel::loadWithPath("./res/models/test-model.glb");
     Shader gltfshader = Shader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
     // create the model texture
     gltfshader.use();
     gltfshader.setInt("tex", 0);
+
+    // shadows
+    // -------
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    unsigned int depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH,
+    SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    unsigned int depthMapFBO;
+    glGenFramebuffers(1, &depthMapFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // render loop
     // -----------
@@ -220,8 +241,7 @@ int main()
 
         // world transformation
         model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.5f));
-        model = glm::translate(model, glm::vec3(5.0, 0.0, 0.0));
+        model = glm::scale(model, glm::vec3(0.25f));
         gltfshader.setMat4("model", model);
 
         gltfshader.setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
@@ -269,21 +289,4 @@ int main()
     // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
-}
-
-void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader)
-{
-    // directional light
-    lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-    lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-    lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-    lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-    // point light
-    lightingShader.setVec3("light.pos", lightPos);
-    lightingShader.setVec3("light.ambient", 0.05f, 0.05f, 0.05f);
-    lightingShader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
-    lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-    lightingShader.setFloat("light.constant", 1.0f);
-    lightingShader.setFloat("light.linear", 0.045f);
-    lightingShader.setFloat("light.quadratic", 0.075f);
 }
