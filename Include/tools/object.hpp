@@ -1,3 +1,6 @@
+#ifndef OBJECT_H
+#define OBJECT_H
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -8,12 +11,14 @@ class Object
 {
 private:
     // VAO / model
-    GltfModel &model;
+    GltfModel *model;
     unsigned int VAO;
     unsigned int numVertices;
+    // mode
+    bool gltf;
 public:
     // shader
-    Shader &shader;
+    Shader *shader;
 
     // constructors / destructors
     Object(GltfModel new_model, Shader new_shader);
@@ -23,3 +28,5 @@ public:
     // draw func
     void draw();
 };
+
+#endif

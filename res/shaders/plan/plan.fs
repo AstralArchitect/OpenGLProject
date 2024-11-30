@@ -1,6 +1,6 @@
 #version 330 core
 
-#define SHININESS 32
+#define SHININESS 128
 
 struct PointLight {
     vec3 pos;

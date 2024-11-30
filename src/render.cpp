@@ -6,14 +6,13 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <tools/camera.hpp>
-#include <tools/shader.hpp>
-#include <tools/gltfloader.hpp>
+#include <tools/object.hpp>
 
-#include <cstdio>
+#include "render.hpp"
 
 // settings
-extern const unsigned int SCR_WIDTH;
-extern const unsigned int SCR_HEIGHT;
+extern const unsigned int SCR_WIDTH = 1920;
+extern const unsigned int SCR_HEIGHT = 1080;
 
 // camera
 extern Camera camera;
@@ -26,9 +25,8 @@ extern const double PI;
 
 void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader);
 
-void renderFrame(GLFWwindow *window, unsigned int *planTexts, Shader &planShader, unsigned int &planVAO, Shader &gltfshader, GltfModel &gltf_model, Shader &lightShader, unsigned int &lightCubeVAO)
+void Render::renderFrame(GLFWwindow *window, unsigned int *planTexts, Object &plan, Object &gltf_model, Object &light)
 {
-
     // view/projection/world transformations
     // -------------------------------
     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -43,67 +41,55 @@ void renderFrame(GLFWwindow *window, unsigned int *planTexts, Shader &planShader
 
     // The plan object
     // ---------------
-    planShader.use();
-    planShader.setVec3("viewPos", camera.Position);
-    planShader.setMat4("projection", projection);
-    planShader.setMat4("view", view);
+    plan.shader->use();
+    plan.shader->setVec3("viewPos", camera.Position);
+    plan.shader->setMat4("projection", projection);
+    plan.shader->setMat4("view", view);
 
     //set the light positions
     float angle = 3.14;
     glm::vec3 pointLightPosition = {cos(angle + (glfwGetTime() / 1.0f)), 0.5, sin(angle + (glfwGetTime() / 1.0f))};
 
-    setPointLight(pointLightPosition, planShader);
+    setPointLight(pointLightPosition, *plan.shader);
 
     // world transformation
     model = glm::mat4(1.0f);
     model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
-    planShader.setMat4("model", model);
+    plan.shader->setMat4("model", model);
 
-    // render the plan
-    glBindVertexArray(planVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-
-    // unbind shader and VAO
-    glBindVertexArray(0);
-    planShader.unuse();
+    plan.draw();
 
     // gltf model
     // ----------
-    gltfshader.use();
-    gltfshader.setMat4("projection", projection);
-    gltfshader.setMat4("view", view);
+    gltf_model.shader->use();
+    gltf_model.shader->setMat4("projection", projection);
+    gltf_model.shader->setMat4("view", view);
 
     // world transformation
     model = glm::mat4(1.0f);
     model = glm::scale(model, glm::vec3(0.25f));
-    gltfshader.setMat4("model", model);
+    gltf_model.shader->setMat4("model", model);
 
-    gltfshader.setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
+    gltf_model.shader->setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
 
     // draw
     gltf_model.draw();
 
     // Light object
     // ------------
-    lightShader.use();
-    lightShader.setMat4("projection", projection);
-    lightShader.setMat4("view", view);
+    light.shader->use();
+    light.shader->setMat4("projection", projection);
+    light.shader->setMat4("view", view);
 
     model = glm::mat4(1.0f);
     model = glm::translate(model, pointLightPosition);
     model = glm::scale(model, glm::vec3(0.2f));
-    lightShader.setMat4("model", model);
+    light.shader->setMat4("model", model);
         
     glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
-    lightShader.setVec3("color", pointLightColor);
+    light.shader->setVec3("color", pointLightColor);
 
-    // render
-    glBindVertexArray(lightCubeVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-
-    // unbinde shader & VAO
-    glBindVertexArray(0);
-    lightShader.unuse();
+    light.draw();
 }
 
 void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader)

@@ -8,8 +8,10 @@
 #include <tools/camera.hpp>
 #include <tools/shader.hpp>
 #include <tools/gltfloader.hpp>
+#include <tools/object.hpp>
 
 #include "callbacks.hpp"
+#include "render.hpp"
 
 #include <cstdio>
 
@@ -25,8 +27,6 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 const double PI = 3.14159265358979323846264338328;
-
-void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader);
 
 int main()
 {
@@ -154,6 +154,10 @@ int main()
     gltfshader.use();
     gltfshader.setInt("tex", 0);
 
+    Object plan(planVAO, 6, planShader);
+    Object lightCube(lightCubeVAO, 36, lightShader);
+    Object gltfObj(gltf_model, gltfshader);
+
     // shadows
     // -------
     const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
@@ -194,80 +198,7 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // view/projection/world transformations
-        // -------------------------------
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 model;
-
-        // bind textures on corresponding texture units
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, planTexts[0]);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, planTexts[1]);
-
-        // The plan object
-        // ---------------
-        planShader.use();
-        planShader.setVec3("viewPos", camera.Position);
-        planShader.setMat4("projection", projection);
-        planShader.setMat4("view", view);
-
-        //set the light positions
-        float angle = 3.14;
-        glm::vec3 pointLightPosition = {cos(angle + (glfwGetTime() / 1.0f)), 0.5, sin(angle + (glfwGetTime() / 1.0f))};
-
-        setPointLight(pointLightPosition, planShader);
-
-        // world transformation
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
-        planShader.setMat4("model", model);
-
-        // render the plan
-        glBindVertexArray(planVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        // unbind shader and VAO
-        glBindVertexArray(0);
-        planShader.unuse();
-
-        // gltf model
-        // ----------
-        gltfshader.use();
-        gltfshader.setMat4("projection", projection);
-        gltfshader.setMat4("view", view);
-
-        // world transformation
-        model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.25f));
-        gltfshader.setMat4("model", model);
-
-        gltfshader.setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
-
-        // draw
-        gltf_model.draw();
-
-        // Light object
-        // ------------
-        lightShader.use();
-        lightShader.setMat4("projection", projection);
-        lightShader.setMat4("view", view);
-
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, pointLightPosition);
-        model = glm::scale(model, glm::vec3(0.2f));
-        lightShader.setMat4("model", model);
-        
-        lightShader.setVec3("color", 1.0f, 1.0f, 1.0f);
-
-        // render
-        glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        // unbinde shader & VAO
-        glBindVertexArray(0);
-        lightShader.unuse();
+        Render::renderFrame(window, planTexts, plan, gltfObj, lightCube);
 
         GLenum err = 1;
         while (err != 0) {
