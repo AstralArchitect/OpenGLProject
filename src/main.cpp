@@ -28,6 +28,8 @@ float lastFrame = 0.0f;
 
 const double PI = 3.14159265358979323846264338328;
 
+void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader);
+
 int main()
 {
     // glfw window creation
@@ -143,20 +145,20 @@ int main()
 
     Shader planShader = Shader("./res/shaders/plan/plan.vs", "./res/shaders/plan/plan.fs");
 
-    GLuint planTexts[2] = {loadTexture(texturePaths[0], true), loadTexture(texturePaths[1], false)};
+    std::vector<GLuint> planTexts = {loadTexture(texturePaths[0], true), loadTexture(texturePaths[1], false)};
     planShader.use();
     planShader.setInt("colorMap", 0);
     planShader.setInt("specMap", 1);
     
-    GltfModel gltf_model = GltfModel::loadWithPath("./res/models/test-model.glb");
-    Shader gltfshader = Shader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
+    GltfModel gltf_model("./res/models/test-model.glb");
+    Shader gltfshader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
     // create the model texture
     gltfshader.use();
     gltfshader.setInt("tex", 0);
 
-    Object plan(planVAO, 6, planShader);
-    Object lightCube(lightCubeVAO, 36, lightShader);
-    Object gltfObj(gltf_model, gltfshader);
+    Object plan(planVAO, 6, &planShader);
+    Object lightCube(lightCubeVAO, 36, &lightShader);
+    Object gltfObj(&gltf_model, &gltfshader);
 
     // shadows
     // -------
@@ -198,7 +200,71 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        Render::renderFrame(window, planTexts, plan, gltfObj, lightCube);
+        //Render::renderFrame(window, planTexts, plan, gltfObj, lightCube);
+
+        // view/projection/world transformations
+    // -------------------------------
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 view = camera.GetViewMatrix();
+    glm::mat4 model;
+
+    // bind textures on corresponding texture units
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, planTexts[0]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, planTexts[1]);
+
+    // The plan object
+    // ---------------
+    plan.shader->use();
+    plan.shader->setVec3("viewPos", camera.Position);
+    plan.shader->setMat4("projection", projection);
+    plan.shader->setMat4("view", view);
+
+    //set the light positions
+    float angle = 3.14;
+    glm::vec3 pointLightPosition = {cos(angle + (glfwGetTime() / 1.0f)), 0.5, sin(angle + (glfwGetTime() / 1.0f))};
+
+    setPointLight(pointLightPosition, *plan.shader);
+
+    // world transformation
+    model = glm::mat4(1.0f);
+    model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
+    plan.shader->setMat4("model", model);
+
+    plan.draw();
+
+    // gltf model
+    // ----------
+    gltfObj.shader->use();
+    gltfObj.shader->setMat4("projection", projection);
+    gltfObj.shader->setMat4("view", view);
+
+    // world transformation
+    model = glm::mat4(1.0f);
+    model = glm::scale(model, glm::vec3(0.25f));
+    gltfObj.shader->setMat4("model", model);
+
+    gltfObj.shader->setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
+
+    // draw
+    gltfObj.draw();
+
+    // Light object
+    // ------------
+    lightCube.shader->use();
+    lightCube.shader->setMat4("projection", projection);
+    lightCube.shader->setMat4("view", view);
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, pointLightPosition);
+    model = glm::scale(model, glm::vec3(0.2f));
+    lightCube.shader->setMat4("model", model);
+        
+    glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
+    lightCube.shader->setVec3("color", pointLightColor);
+
+    lightCube.draw();
 
         GLenum err = 1;
         while (err != 0) {

@@ -10,15 +10,15 @@
 #define btogl(x) x ? GL_TRUE : GL_FALSE
 #define tget(x, y) std::get<x>(y)
 
-GltfModel GltfModel::loadWithPath(const char* filename) {
+GltfModel::GltfModel(const char* filename) {
     tinygltf::TinyGLTF loader;
     std::string err;
     std::string warn;
 
-    tinygltf::Model model;
+    tinygltf::Model tiny_model;
     std::vector<GltfNode> children;
 
-    bool res = loader.LoadBinaryFromFile(&model, &err, &warn, filename);
+    bool res = loader.LoadBinaryFromFile(&tiny_model, &err, &warn, filename);
     if (!warn.empty()) {
         printf("[Gltf] WARN: %s\n", warn.c_str());
     }
@@ -30,20 +30,15 @@ GltfModel GltfModel::loadWithPath(const char* filename) {
     if (!res) printf("Failed to load glTF: %s\n", filename);
     else printf("Loaded glTF: %s\n", filename);
 
-    const tinygltf::Scene &scene = model.scenes[model.defaultScene];
+    const tinygltf::Scene &scene = tiny_model.scenes[tiny_model.defaultScene];
     std::vector<GltfNode> loaded_nodes;
     for (size_t i = 0; i < scene.nodes.size(); ++i) {
-        assert((scene.nodes[i] >= 0) && (scene.nodes[i] < model.nodes.size()));
-        loaded_nodes.push_back(GltfNode(model, model.nodes[scene.nodes[i]]));
+        assert((scene.nodes[i] >= 0) && ((unsigned long)scene.nodes[i] < tiny_model.nodes.size()));
+        loaded_nodes.push_back(GltfNode(tiny_model, tiny_model.nodes[scene.nodes[i]]));
     }
 
     children = loaded_nodes;
-
-    GltfModel out;
-    out.children = children;
-    out.model = model;
-
-    return out;
+    model = tiny_model;
 }
 
 void GltfModel::draw() {
@@ -53,13 +48,13 @@ void GltfModel::draw() {
 }
 
 GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node) {
-    mesh = ((node.mesh >= 0) && (node.mesh < root.meshes.size())) ?
+    mesh = ((node.mesh >= 0) && ((unsigned long)node.mesh < root.meshes.size())) ?
         std::optional(GltfMesh(root, root.meshes[node.mesh])) :
         std::nullopt;
 
 
     for (size_t i = 0; i < node.children.size(); i++) {
-        assert((node.children[i] >= 0) && (node.children[i] < root.nodes.size()));
+        assert((node.children[i] >= 0) && ((unsigned long)node.children[i] < root.nodes.size()));
         children.push_back(GltfNode(root, root.nodes[node.children[i]]));
     }
 }
@@ -100,25 +95,25 @@ void GltfMesh::draw() {
 }
 
 GLuint load_texture_to_gpu(tinygltf::Model &root, tinygltf::TextureInfo texinfo) {
-    assert((texinfo.index >= 0) && (texinfo.index < root.textures.size()));
+    assert((texinfo.index >= 0) && ((unsigned long)texinfo.index < root.textures.size()));
     tinygltf::Texture gltftex = root.textures[texinfo.index];
 
-    assert((gltftex.source >= 0) && (gltftex.source < root.images.size()));
+    assert((gltftex.source >= 0) && ((unsigned long)gltftex.source < root.images.size()));
     tinygltf::Image image = root.images[gltftex.source];
 
-    assert((gltftex.sampler >= 0) && (gltftex.sampler < root.textures.size()));
+    assert((gltftex.sampler >= 0) && ((unsigned long)gltftex.sampler < root.textures.size()));
     tinygltf::Sampler sampler = root.samplers[gltftex.sampler];
 
-    GLenum tex_components, tex_bits;
+    GLenum tex_components/*, tex_bits*/;
     switch (image.component) {
         case 3:
             tex_components = GL_RGB;
-            tex_bits = GL_RGB8;
+            //tex_bits = GL_RGB8;
             break;
 
         case 4:
             tex_components = GL_RGBA;
-            tex_bits = GL_RGBA8;
+            //tex_bits = GL_RGBA8;
             break;
         default:
             printf("%d components isn't supported right now", image.component);
@@ -160,7 +155,7 @@ void GltfMaterial::activate() const {
 
 GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &prim) {
     glGenVertexArrays(1, &vao);
-    printf("VAO num: %lu\n", vao);
+    //printf("VAO num: %lu\n", vao);
     glBindVertexArray(vao);
 
     typedef struct {
@@ -179,14 +174,14 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     int stride = 3;
 
     for (const auto &attr : prim.attributes) {
-        assert((attr.second >= 0) && (attr.second < root.accessors.size()));
+        assert((attr.second >= 0) && ((unsigned long)attr.second < root.accessors.size()));
         tinygltf::Accessor accessor = root.accessors[attr.second];
         assert(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
 
-        assert((accessor.bufferView >= 0) && (accessor.bufferView < root.bufferViews.size()));
+        assert((accessor.bufferView >= 0) && ((unsigned long)accessor.bufferView < root.bufferViews.size()));
         tinygltf::BufferView buffer_view = root.bufferViews[accessor.bufferView];
 
-        assert((buffer_view.buffer >= 0) && (buffer_view.buffer < root.buffers.size()));
+        assert((buffer_view.buffer >= 0) && ((unsigned long)buffer_view.buffer < root.buffers.size()));
         tinygltf::Buffer buffer = root.buffers[buffer_view.buffer];
 
         if (attr.first.compare("POSITION") == 0) {
@@ -225,7 +220,7 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     printf("Vertex count: %zu\n", pos_buf.accessor.count);
 
     std::vector<unsigned char> final_buffer;
-    for (int idx = 0; idx < pos_buf.accessor.count; idx++) {
+    for (size_t idx = 0; idx < pos_buf.accessor.count; idx++) {
         final_buffer.insert(
             final_buffer.cend(),
             pos_buf.buffer.data.cbegin() + pos_buf.buffer_view.byteOffset + (idx * 3 * sizeof(float)),
@@ -255,20 +250,20 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     glGenBuffers(1, &ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-    assert((prim.indices >= 0) && (prim.indices < root.accessors.size()));
+    assert((prim.indices >= 0) && ((unsigned long)prim.indices < root.accessors.size()));
     tinygltf::Accessor indices_accessor = root.accessors[prim.indices];
     
-    assert((indices_accessor.bufferView >= 0) && (indices_accessor.bufferView < root.bufferViews.size()));
+    assert((indices_accessor.bufferView >= 0) && ((unsigned long)indices_accessor.bufferView < root.bufferViews.size()));
     tinygltf::BufferView indices_buffer_view = root.bufferViews[indices_accessor.bufferView];
 
-    assert((indices_buffer_view.buffer >= 0) && (indices_buffer_view.buffer < root.buffers.size()));
+    assert((indices_buffer_view.buffer >= 0) && ((unsigned long)indices_buffer_view.buffer < root.buffers.size()));
     tinygltf::Buffer indices_buffer = root.buffers[indices_buffer_view.buffer];
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_buffer_view.byteLength, indices_buffer.data.data() + indices_buffer_view.byteOffset, GL_STATIC_DRAW);
 
     glBindVertexArray(0);
 
-    assert((prim.material >= 0) && (prim.material < root.materials.size()));
+    assert((prim.material >= 0) && ((unsigned long)prim.material < root.materials.size()));
     tinygltf::Material mat = root.materials[prim.material];
 
     material = GltfMaterial(root, mat);

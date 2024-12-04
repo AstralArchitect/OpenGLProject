@@ -50,7 +50,7 @@ class GltfNode {
 
 class GltfModel {
     public:
-        static GltfModel loadWithPath(const char* filename);
+        GltfModel(const char* filename);
         void draw();
 
     private:

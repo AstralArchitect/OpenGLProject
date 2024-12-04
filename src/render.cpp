@@ -25,7 +25,7 @@ extern const double PI;
 
 void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader);
 
-void Render::renderFrame(GLFWwindow *window, unsigned int *planTexts, Object &plan, Object &gltf_model, Object &light)
+void Render::renderFrame(GLFWwindow *window, std::vector<GLuint> planTexts, Object &plan, Object &gltf_model, Object &light)
 {
     // view/projection/world transformations
     // -------------------------------
