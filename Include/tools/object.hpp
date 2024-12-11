@@ -12,6 +12,7 @@ class Object
 private:
     // VAO / model
     GltfModel *model;
+    unsigned int VAO;
     
     unsigned int numVertices;
     // mode
@@ -19,11 +20,10 @@ private:
 public:
     // shader
     Shader *shader;
-    unsigned int VAO;
 
     // constructors / destructors
     Object(GltfModel *new_model, Shader *new_shader);
-    Object(unsigned int new_VAO, unsigned int numVertices, Shader *new_shader);
+    Object(unsigned int new_VAO, unsigned int const& numVertices, Shader *new_shader);
 
     // draw func
     void draw();
