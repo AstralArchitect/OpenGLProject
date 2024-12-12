@@ -54,7 +54,7 @@ class GltfModel {
         void draw();
 
     private:
-        tinygltf::Model model;
+        tinygltf::Model tiny_model;
         std::vector<GltfNode> children;
 };
 

@@ -15,8 +15,8 @@ GltfModel::GltfModel(const char* filename) {
     std::string err;
     std::string warn;
 
-    tinygltf::Model tiny_model;
-    std::vector<GltfNode> children;
+    //tinygltf::Model tiny_model;
+    //std::vector<GltfNode> children;
 
     bool res = loader.LoadBinaryFromFile(&tiny_model, &err, &warn, filename);
     if (!warn.empty()) {
@@ -31,14 +31,10 @@ GltfModel::GltfModel(const char* filename) {
     else printf("Loaded glTF: %s\n", filename);
 
     const tinygltf::Scene &scene = tiny_model.scenes[tiny_model.defaultScene];
-    std::vector<GltfNode> loaded_nodes;
     for (size_t i = 0; i < scene.nodes.size(); ++i) {
         assert((scene.nodes[i] >= 0) && ((unsigned long)scene.nodes[i] < tiny_model.nodes.size()));
-        loaded_nodes.push_back(GltfNode(tiny_model, tiny_model.nodes[scene.nodes[i]]));
+        children.push_back(GltfNode(tiny_model, tiny_model.nodes[scene.nodes[i]]));
     }
-
-    children = loaded_nodes;
-    model = tiny_model;
 }
 
 void GltfModel::draw() {
