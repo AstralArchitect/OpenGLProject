@@ -7,9 +7,12 @@
 
 Object::Object(GltfModel *new_model, Shader *new_shader)
 { 
-    model = (GltfModel*)new_model;
+    model = new_model;
     shader = new_shader;
     gltf = true;
+
+    VAO = 0;
+    numVertices = 0;
 }
 
 Object::Object(unsigned int new_VAO, unsigned int const& new_numVertices, Shader *new_shader)
@@ -33,4 +36,10 @@ void Object::draw()
     // unbinde shader & VAO
     glBindVertexArray(0);
     shader->unuse();
+}
+
+void Object::setWorld(glm::mat4 projection, glm::mat4 view)
+{
+    shader->setMat4("projection", projection);
+    shader->setMat4("view", view);
 }

@@ -11,8 +11,8 @@ class Object
 {
 private:
     // VAO / model
-    GltfModel *model;
     unsigned int VAO;
+    GltfModel *model;
     
     unsigned int numVertices;
     // mode
@@ -24,6 +24,9 @@ public:
     // constructors / destructors
     Object(GltfModel *new_model, Shader *new_shader);
     Object(unsigned int new_VAO, unsigned int const& numVertices, Shader *new_shader);
+
+    // shader's world properties func
+    void setWorld(glm::mat4 projection, glm::mat4 view);
 
     // draw func
     void draw();

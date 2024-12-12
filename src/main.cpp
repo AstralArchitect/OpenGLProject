@@ -218,8 +218,7 @@ int main()
     // ---------------
     plan.shader->use();
     plan.shader->setVec3("viewPos", camera.Position);
-    plan.shader->setMat4("projection", projection);
-    plan.shader->setMat4("view", view);
+    plan.setWorld(projection, view);
 
     //set the light positions
     float angle = 3.14;
@@ -237,8 +236,7 @@ int main()
     // gltf model
     // ----------
     gltfObj.shader->use();
-    gltfObj.shader->setMat4("projection", projection);
-    gltfObj.shader->setMat4("view", view);
+    gltfObj.setWorld(projection, view);
 
     // world transformation
     model = glm::mat4(1.0f);
@@ -248,7 +246,8 @@ int main()
     gltfObj.shader->setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
 
     // draw
-    gltfObj.draw();
+    //gltfObj.draw();
+    gltf_model.draw();
 
     // Light object
     // ------------

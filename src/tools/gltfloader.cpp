@@ -104,16 +104,16 @@ GLuint load_texture_to_gpu(tinygltf::Model &root, tinygltf::TextureInfo texinfo)
     assert((gltftex.sampler >= 0) && ((unsigned long)gltftex.sampler < root.textures.size()));
     tinygltf::Sampler sampler = root.samplers[gltftex.sampler];
 
-    GLenum tex_components/*, tex_bits*/;
+    GLenum tex_components, tex_bits;
     switch (image.component) {
         case 3:
             tex_components = GL_RGB;
-            //tex_bits = GL_RGB8;
+            tex_bits = GL_RGB8;
             break;
 
         case 4:
             tex_components = GL_RGBA;
-            //tex_bits = GL_RGBA8;
+            tex_bits = GL_RGBA8;
             break;
         default:
             printf("%d components isn't supported right now", image.component);
