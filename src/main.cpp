@@ -245,7 +245,7 @@ int main()
     model = glm::scale(model, glm::vec3(0.25f));
     gltfObj.shader->setMat4("model", model);
 
-    gltfObj.shader->setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
+    //gltfObj.shader->setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
 
     // draw
     gltfObj.draw();
