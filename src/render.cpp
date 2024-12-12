@@ -23,9 +23,9 @@ extern float lastFrame;
 
 extern const double PI;
 
-void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader);
+extern glm::vec3 lightPos;
 
-void Render::renderFrame(GLFWwindow *window, std::vector<GLuint> planTexts, Object &plan, Object &gltf_model, Object &light)
+void Render::renderFrame(GLFWwindow *window, std::vector<GLuint> planTexts, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix)
 {
     // view/projection/world transformations
     // -------------------------------
@@ -43,14 +43,14 @@ void Render::renderFrame(GLFWwindow *window, std::vector<GLuint> planTexts, Obje
     // ---------------
     plan.shader->use();
     plan.shader->setVec3("viewPos", camera.Position);
+    plan.shader->setVec3("lightPos", lightPos);
     plan.shader->setMat4("projection", projection);
     plan.shader->setMat4("view", view);
+    plan.shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
     //set the light positions
     float angle = 3.14;
     glm::vec3 pointLightPosition = {cos(angle + (glfwGetTime() / 1.0f)), 0.5, sin(angle + (glfwGetTime() / 1.0f))};
-
-    setPointLight(pointLightPosition, *plan.shader);
 
     // world transformation
     model = glm::mat4(1.0f);
@@ -90,21 +90,4 @@ void Render::renderFrame(GLFWwindow *window, std::vector<GLuint> planTexts, Obje
     light.shader->setVec3("color", pointLightColor);
 
     light.draw();
-}
-
-void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader)
-{
-    // directional light
-    lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-    lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-    lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-    lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-    // point light
-    lightingShader.setVec3("light.pos", lightPos);
-    lightingShader.setVec3("light.ambient", 0.05f, 0.05f, 0.05f);
-    lightingShader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f);
-    lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-    lightingShader.setFloat("light.constant", 1.0f);
-    lightingShader.setFloat("light.linear", 0.045f);
-    lightingShader.setFloat("light.quadratic", 0.075f);
 }

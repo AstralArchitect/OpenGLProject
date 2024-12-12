@@ -28,6 +28,10 @@ float lastFrame = 0.0f;
 
 const double PI = 3.14159265358979323846264338328;
 
+// lighting info
+// -------------
+glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
+
 void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader);
 
 int main()
@@ -149,12 +153,16 @@ int main()
     planShader.use();
     planShader.setInt("colorMap", 0);
     planShader.setInt("specMap", 1);
+    planShader.setInt("shadowMap", 2);
+
     
     GltfModel gltf_model("./res/models/test-model.glb");
     Shader gltfshader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
     // create the model texture
     gltfshader.use();
     gltfshader.setInt("tex", 0);
+
+    Shader simpleDepthShader("res/shaders/simpleDepthShader/vertex.vs", "res/shaders/simpleDepthShader/fragment.fs");
 
     Object plan(planVAO, 6, &planShader);
     Object lightCube(lightCubeVAO, 36, &lightShader);
@@ -195,75 +203,29 @@ int main()
         // -----
         Callback::processInput(window);
 
-        // render attributes
-        // -----------------
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        // 1. first render to depth map
+        glm::mat4 lightProjection, lightView;
+        glm::mat4 lightSpaceMatrix;
+        float near_plane = 1.0f, far_plane = 7.5f;
+        lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+        lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+        lightSpaceMatrix = lightProjection * lightView;
+        // render scene from light's point of view
+        simpleDepthShader.use();
+        simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            Render::renderFrame(window, planTexts, plan, gltfObj, lightCube, lightSpaceMatrix);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // 2. then render scene as normal with shadow mapping (using depth map)
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        Render::renderFrame(window, planTexts, plan, gltfObj, lightCube, lightSpaceMatrix);
 
-        //Render::renderFrame(window, planTexts, plan, gltfObj, lightCube);
-
-        // view/projection/world transformations
-    // -------------------------------
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-    glm::mat4 view = camera.GetViewMatrix();
-    glm::mat4 model;
-
-    // bind textures on corresponding texture units
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, planTexts[0]);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, planTexts[1]);
-
-    // The plan object
-    // ---------------
-    plan.shader->use();
-    plan.shader->setVec3("viewPos", camera.Position);
-    plan.setWorld(projection, view);
-
-    //set the light positions
-    float angle = 3.14;
-    glm::vec3 pointLightPosition = {cos(angle + (glfwGetTime() / 1.0f)), 0.5, sin(angle + (glfwGetTime() / 1.0f))};
-
-    setPointLight(pointLightPosition, *plan.shader);
-
-    // world transformation
-    model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
-    plan.shader->setMat4("model", model);
-
-    plan.draw();
-
-    // gltf model
-    // ----------
-    gltfObj.shader->use();
-    gltfObj.setWorld(projection, view);
-
-    // world transformation
-    model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(0.25f));
-    gltfObj.shader->setMat4("model", model);
-
-    //gltfObj.shader->setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
-
-    // draw
-    //gltfObj.draw();
-    gltf_model.draw();
-
-    // Light object
-    // ------------
-    lightCube.shader->use();
-    lightCube.shader->setMat4("projection", projection);
-    lightCube.shader->setMat4("view", view);
-
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, pointLightPosition);
-    model = glm::scale(model, glm::vec3(0.2f));
-    lightCube.shader->setMat4("model", model);
-        
-    glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
-    lightCube.shader->setVec3("color", pointLightColor);
-
-    lightCube.draw();
 
         GLenum err = 1;
         while (err != 0) {

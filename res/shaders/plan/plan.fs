@@ -2,87 +2,47 @@
 
 #define SHININESS 128
 
-struct PointLight {
-    vec3 pos;
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-
-    float constant;
-    float linear;
-    float quadratic;
-};
-
-struct DirLight {
-    vec3 direction;
-	
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};
-// light
-uniform PointLight light;
-uniform DirLight dirLight;
-
 out vec4 FragColor;
 
-in vec3 Normal;
-in vec3 FragPos;
-in vec2 TexCoords;
+in VS_OUT {
+    vec3 FragPos;
+    vec3 Normal;
+    vec2 TexCoords;
+    vec4 FragPosLightSpace;
+} fs_in;
 
 uniform sampler2D colorMap;
 uniform sampler2D specMap;
+uniform sampler2D shadowMap;
 
 uniform vec3 viewPos;
+uniform vec3 lightPos;
 
-vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
-vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir);
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    // perform perspective divide
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    return 0.0;
+}
 
 void main() {
-    // normalized vectors
-    vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 norm = normalize(Normal);
-    // calculate light    
-    vec3 result = calcPointLight(light, norm, FragPos, viewDir);
-    result += calcDirLight(dirLight, norm, viewDir);
-    result = pow(result, vec3(1.0/2.2));
-    FragColor = vec4(result, 1.0);
-}
-
-// calculates the color when using a point light.
-vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
-{
-    vec3 lightDir = normalize(light.pos - fragPos);
-    vec3 halfwayDir = normalize(lightDir + viewDir); 
-    // diffuse shading
-    float diff = max(dot(normal, lightDir), 0.0);
-    // specular shading
-    float spec = pow(max(dot(viewDir, halfwayDir), 0.0), SHININESS);
-    // attenuation
-    float distance = length(light.pos - fragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
-    // combine results
-    vec3 ambient = light.ambient * vec3(texture(colorMap, TexCoords));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(colorMap, TexCoords));
-    vec3 specular = light.specular * spec * vec3(texture(specMap, TexCoords));
-    ambient *= attenuation;
-    diffuse *= attenuation;
-    specular *= attenuation;
-    return (ambient + diffuse + specular);
-}
-
-// calculates the color when using a directional light.
-vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir)
-{
-    vec3 lightDir = normalize(-light.direction);
-    vec3 halfwayDir = normalize(lightDir + viewDir); 
-    // diffuse shading
-    float diff = max(dot(normal, lightDir), 0.0);
-    // specular shading
-    float spec = pow(max(dot(viewDir, halfwayDir), 0.0), SHININESS);
-    // combine results
-    vec3 ambient = light.ambient * vec3(texture(colorMap, TexCoords));
-    vec3 diffuse = light.diffuse * diff * vec3(texture(colorMap, TexCoords));
-    vec3 specular = light.specular * spec * vec3(texture(specMap, TexCoords));
-    return (ambient + diffuse + specular);
+    vec3 color = texture(colorMap, fs_in.TexCoords).rgb;
+    vec3 normal = normalize(fs_in.Normal);
+    vec3 lightColor = vec3(1.0);
+    // ambient
+    vec3 ambient = 0.15 * color;
+    // diffuse
+    vec3 lightDir = normalize(lightPos - fs_in.FragPos);
+    float diff = max(dot(lightDir, normal), 0.0);
+    vec3 diffuse = diff * lightColor;
+    // specular
+    vec3 viewDir = normalize(viewPos - fs_in.FragPos);
+    float spec = 0.0;
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    spec = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
+    vec3 specular = spec * lightColor;
+    // calculate shadow
+    float shadow = ShadowCalculation(fs_in.FragPosLightSpace);
+    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+    FragColor = vec4(lighting, 1.0);
 }
