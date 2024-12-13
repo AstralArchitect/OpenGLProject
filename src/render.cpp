@@ -25,7 +25,7 @@ extern const double PI;
 
 extern glm::vec3 lightPos;
 
-void Render::renderFrame(GLFWwindow *window, std::vector<GLuint> planTexts, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix)
+void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix)
 {
     // view/projection/world transformations
     // -------------------------------
@@ -35,22 +35,20 @@ void Render::renderFrame(GLFWwindow *window, std::vector<GLuint> planTexts, Obje
 
     // bind textures on corresponding texture units
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, planTexts[0]);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, planTexts[1]);
+    glBindTexture(GL_TEXTURE_2D, plan.getText());
 
     // The plan object
     // ---------------
+    //set the light positions
+    float angle = 3.14;
+    lightPos = {cos(angle + (glfwGetTime() / 1.0f)), 0.5, sin(angle + (glfwGetTime() / 1.0f))};
+
     plan.shader->use();
     plan.shader->setVec3("viewPos", camera.Position);
-    plan.shader->setVec3("lightPos", lightPos);
+    plan.shader->setVec3("lightPos", lightPos.x, lightPos.y - .5f, lightPos.z);
     plan.shader->setMat4("projection", projection);
     plan.shader->setMat4("view", view);
     plan.shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-
-    //set the light positions
-    float angle = 3.14;
-    glm::vec3 pointLightPosition = {cos(angle + (glfwGetTime() / 1.0f)), 0.5, sin(angle + (glfwGetTime() / 1.0f))};
 
     // world transformation
     model = glm::mat4(1.0f);
@@ -82,7 +80,7 @@ void Render::renderFrame(GLFWwindow *window, std::vector<GLuint> planTexts, Obje
     light.shader->setMat4("view", view);
 
     model = glm::mat4(1.0f);
-    model = glm::translate(model, pointLightPosition);
+    model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f));
     light.shader->setMat4("model", model);
         
@@ -90,4 +88,23 @@ void Render::renderFrame(GLFWwindow *window, std::vector<GLuint> planTexts, Obje
     light.shader->setVec3("color", pointLightColor);
 
     light.draw();
+}
+
+void Render::renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, Shader const& shader)
+{
+    glm::mat4 model = glm::mat4(1.0f);
+    shader.use();
+    // plan
+    model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
+    shader.setMat4("model", model);
+    plan.draw();
+    // gltf model
+    model = glm::scale(model, glm::vec3(0.25f));
+    shader.setMat4("model", model);
+    gltf_model.draw();
+    // light
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, lightPos);
+    model = glm::scale(model, glm::vec3(0.2f));
+    shader.setMat4("model", model);
 }

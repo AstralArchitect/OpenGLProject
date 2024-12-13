@@ -15,11 +15,21 @@ Object::Object(GltfModel *new_model, Shader *new_shader)
     numVertices = 0;
 }
 
-Object::Object(unsigned int new_VAO, unsigned int const& new_numVertices, Shader *new_shader)
+Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader)
 {
     VAO = new_VAO;
     numVertices = new_numVertices;
     shader = new_shader;
+    gltf = false;
+}
+
+Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader, GLuint const& new_text)
+{
+    VAO = new_VAO;
+    numVertices = new_numVertices;
+    shader = new_shader;
+    texture = new_text;
+
     gltf = false;
 }
 
@@ -42,4 +52,9 @@ void Object::setWorld(glm::mat4 projection, glm::mat4 view)
 {
     shader->setMat4("projection", projection);
     shader->setMat4("view", view);
+}
+
+GLuint Object::getText()
+{
+    return texture;
 }

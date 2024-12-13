@@ -30,7 +30,7 @@ const double PI = 3.14159265358979323846264338328;
 
 // lighting info
 // -------------
-glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
+glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 
 void setPointLight(glm::vec3 const& lightPos, Shader const& lightingShader);
 
@@ -142,18 +142,14 @@ int main()
 
     Shader lightShader = Shader("./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
 
-    char* texturePaths[2] = {
-        (char*)"res/textures/bois.jpg",
-        (char*)"res/textures/bois_specular.jpg"
-    };
+    char* texturePaths = "res/textures/bois.jpg";
 
     Shader planShader = Shader("./res/shaders/plan/plan.vs", "./res/shaders/plan/plan.fs");
 
-    std::vector<GLuint> planTexts = {loadTexture(texturePaths[0], true), loadTexture(texturePaths[1], false)};
+    GLuint planText = loadTexture(texturePaths, true);
     planShader.use();
     planShader.setInt("colorMap", 0);
-    planShader.setInt("specMap", 1);
-    planShader.setInt("shadowMap", 2);
+    planShader.setInt("shadowMap", 1);
 
     
     GltfModel gltf_model("./res/models/test-model.glb");
@@ -164,7 +160,7 @@ int main()
 
     Shader simpleDepthShader("res/shaders/simpleDepthShader/vertex.vs", "res/shaders/simpleDepthShader/fragment.fs");
 
-    Object plan(planVAO, 6, &planShader);
+    Object plan(planVAO, 6, &planShader, planText);
     Object lightCube(lightCubeVAO, 36, &lightShader);
     Object gltfObj(&gltf_model, &gltfshader);
 
@@ -203,6 +199,11 @@ int main()
         // -----
         Callback::processInput(window);
 
+        // render
+        // ------
+        glClearColor(0.1, 0.1, 0.1, 0.1);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         // 1. first render to depth map
         glm::mat4 lightProjection, lightView;
         glm::mat4 lightSpaceMatrix;
@@ -217,14 +218,15 @@ int main()
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
-            Render::renderFrame(window, planTexts, plan, gltfObj, lightCube, lightSpaceMatrix);
+            Render::renderScene(window, plan, gltfObj, lightCube, simpleDepthShader);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
         // 2. then render scene as normal with shadow mapping (using depth map)
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, depthMap);
-        Render::renderFrame(window, planTexts, plan, gltfObj, lightCube, lightSpaceMatrix);
+        Render::renderFrame(window, plan, gltfObj, lightCube, lightSpaceMatrix);
 
 
         GLenum err = 1;

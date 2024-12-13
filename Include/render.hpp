@@ -4,5 +4,6 @@
 #include <vector>
 
 namespace Render {
-    void renderFrame(GLFWwindow *window, std::vector<GLuint> planTexts, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix);
+    void renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix);
+    void renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, Shader const& shader);
 };

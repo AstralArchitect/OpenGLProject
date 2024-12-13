@@ -15,6 +15,7 @@ private:
     GltfModel *model;
     
     unsigned int numVertices;
+    GLuint texture;
     // mode
     bool gltf;
 public:
@@ -23,10 +24,14 @@ public:
 
     // constructors / destructors
     Object(GltfModel *new_model, Shader *new_shader);
-    Object(unsigned int new_VAO, unsigned int const& numVertices, Shader *new_shader);
+    Object(unsigned int const& new_VAO, unsigned int const& numVertices, Shader *new_shader);
+    Object(unsigned int const& new_VAO, unsigned int const& numVertices, Shader *new_shader, GLuint const& new_text);
 
     // shader's world properties func
     void setWorld(glm::mat4 projection, glm::mat4 view);
+
+    // text func
+    GLuint getText();
 
     // draw func
     void draw();
