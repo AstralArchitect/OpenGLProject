@@ -21,6 +21,7 @@ class GltfPrimitive {
     public:
         GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &prim);
         void draw() const;
+        void drawWithoutTextures() const;
     
     private:
         GLuint vao;
@@ -33,6 +34,7 @@ class GltfMesh {
     public:
         GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh);
         void draw();
+        void drawWithoutTextures();
 
     private:
         std::vector<GltfPrimitive> primitives;
@@ -42,6 +44,7 @@ class GltfNode {
     public:
         GltfNode(tinygltf::Model &root, tinygltf::Node node);
         void draw();
+        void drawWithoutTextures();
 
     private:
         std::optional<GltfMesh> mesh;
@@ -52,6 +55,7 @@ class GltfModel {
     public:
         GltfModel(const char* filename);
         void draw();
+        void drawWithoutTextures();
 
     private:
         tinygltf::Model tiny_model;

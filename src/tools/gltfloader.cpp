@@ -43,6 +43,12 @@ void GltfModel::draw() {
     }
 }
 
+void GltfModel::drawWithoutTextures() {
+    for (GltfNode &child: this->children) {
+        child.drawWithoutTextures();
+    }
+}
+
 GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node) {
     mesh = ((node.mesh >= 0) && ((unsigned long)node.mesh < root.meshes.size())) ?
         std::optional(GltfMesh(root, root.meshes[node.mesh])) :
@@ -62,6 +68,16 @@ void GltfNode::draw() {
 
     if (this->mesh.has_value()) {
         this->mesh.value().draw();
+    }
+}
+
+void GltfNode::drawWithoutTextures() {
+    for (GltfNode &child: this->children) {
+        child.drawWithoutTextures();
+    }
+
+    if (this->mesh.has_value()) {
+        this->mesh.value().drawWithoutTextures();
     }
 }
 
@@ -87,6 +103,12 @@ void print_tuple(const std::tuple<T...> &tuple_to_print) {
 void GltfMesh::draw() {
     for (const auto &prim: this->primitives) {
         prim.draw();
+    }
+}
+
+void GltfMesh::drawWithoutTextures() {
+    for (const auto &prim: this->primitives) {
+        prim.drawWithoutTextures();
     }
 }
 
@@ -272,6 +294,13 @@ void GltfPrimitive::draw() const {
     glBindVertexArray(vao);
 
     material.activate();
+
+    glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, (void*)0);
+    glBindVertexArray(0);
+}
+
+void GltfPrimitive::drawWithoutTextures() const {
+    glBindVertexArray(vao);
 
     glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, (void*)0);
     glBindVertexArray(0);

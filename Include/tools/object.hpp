@@ -33,8 +33,9 @@ public:
     // text func
     GLuint getText();
 
-    // draw func
+    // draw funcs
     void draw();
+    void drawWithoutTexture();
 };
 
 #endif

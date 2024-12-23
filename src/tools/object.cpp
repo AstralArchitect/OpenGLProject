@@ -48,6 +48,21 @@ void Object::draw()
     shader->unuse();
 }
 
+void Object::drawWithoutTexture()
+{
+    if (gltf)
+    {
+        model->drawWithoutTextures();
+        shader->unuse();
+        return;
+    }
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLES, 0, numVertices);
+    // unbinde shader & VAO
+    glBindVertexArray(0);
+    shader->unuse();
+}
+
 void Object::setWorld(glm::mat4 projection, glm::mat4 view)
 {
     shader->setMat4("projection", projection);

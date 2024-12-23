@@ -25,7 +25,7 @@ extern const double PI;
 
 extern glm::vec3 lightPos;
 
-void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix)
+void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix, GLuint depthMap)
 {
     // view/projection/world transformations
     // -------------------------------
@@ -33,15 +33,11 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     glm::mat4 view = camera.GetViewMatrix();
     glm::mat4 model;
 
-    // bind textures on corresponding texture units
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, plan.getText());
-
     // The plan object
     // ---------------
-    //set the light positions
+    // updaate the light positions
     float angle = 3.14;
-    lightPos = {cos(angle + (glfwGetTime() / 1.0f)), 0.5, sin(angle + (glfwGetTime() / 1.0f))};
+    //lightPos = {cos(angle + glfwGetTime()), 0.5, sin(angle + glfwGetTime())};
 
     plan.shader->use();
     plan.shader->setVec3("viewPos", camera.Position);
@@ -54,6 +50,12 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     model = glm::mat4(1.0f);
     model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
     plan.shader->setMat4("model", model);
+
+    // bind textures on corresponding texture units
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, plan.getText());
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
 
     plan.draw();
 
@@ -93,7 +95,6 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
 void Render::renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, Shader const& shader)
 {
     glm::mat4 model = glm::mat4(1.0f);
-    shader.use();
     // plan
     model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
     shader.setMat4("model", model);
@@ -101,7 +102,7 @@ void Render::renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, O
     // gltf model
     model = glm::scale(model, glm::vec3(0.25f));
     shader.setMat4("model", model);
-    gltf_model.draw();
+    gltf_model.drawWithoutTexture();
     // light
     model = glm::mat4(1.0f);
     model = glm::translate(model, lightPos);
