@@ -92,6 +92,8 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     light.draw();
 }
 
+// le problème là dedans c'est que le  machin draw avec un shader qui n'as pas les bon layouts. Le shader en a
+// que 1 alors que le plan et le gltf_model en ont +. Et donc ça fait de la merde (GL error 1282)
 void Render::renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, Shader const& shader)
 {
     glm::mat4 model = glm::mat4(1.0f);

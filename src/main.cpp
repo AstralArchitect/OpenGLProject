@@ -216,11 +216,11 @@ int main()
         simpleDepthShader.use();
         simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
-        /*glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
             Render::renderScene(window, plan, gltfObj, lightCube, simpleDepthShader);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // reset viewport
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
