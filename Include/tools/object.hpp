@@ -25,8 +25,8 @@ public:
 
     // constructors / destructors
     Object(GltfModel *new_model, Shader *new_shader, Shader *new_depthShader);
-    Object(unsigned int const& new_VAO, unsigned int const& numVertices, Shader *new_shader, Shader *new_depthShader);
-    Object(unsigned int const& new_VAO, unsigned int const& numVertices, Shader *new_shader, Shader *new_depthShader, GLuint const& new_text);
+    Object(unsigned int const& new_VAO, unsigned int const& numVertices, Shader *new_shader);
+    Object(unsigned int const& new_VAO, unsigned int const& numVertices, Shader *new_shader, GLuint const& new_text);
 
     // shader's world properties func
     void setWorld(glm::mat4 projection, glm::mat4 view);

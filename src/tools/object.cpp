@@ -16,21 +16,21 @@ Object::Object(GltfModel *new_model, Shader *new_shader, Shader *new_depthShader
     numVertices = 0;
 }
 
-Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader, Shader *new_depthShader)
+Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader)
 {
     VAO = new_VAO;
     numVertices = new_numVertices;
     shader = new_shader;
-    depthShader = new_depthShader;
+    depthShader = nullptr;
     gltf = false;
 }
 
-Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader, Shader *new_depthShader, GLuint const& new_text)
+Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader, GLuint const& new_text)
 {
     VAO = new_VAO;
     numVertices = new_numVertices;
     shader = new_shader;
-    depthShader = new_depthShader;
+    depthShader = nullptr;
     texture = new_text;
 
     gltf = false;

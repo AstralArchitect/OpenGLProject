@@ -30,7 +30,7 @@ const double PI = 3.14159265358979323846264338328;
 
 // lighting info
 // -------------
-glm::vec3 lightPos(1.0f, .5f, .5f);
+glm::vec3 lightPos;
 
 int main()
 {
@@ -139,12 +139,10 @@ int main()
     glEnableVertexAttribArray(0);
 
     Shader lightShader = Shader("./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
-    Shader depthLightShader("res/shaders/light_cube/depth.vs", "res/shaders/light_cube/depth.fs");
 
     char* texturePaths = (char*)"res/textures/bois.jpg";
 
     Shader planShader = Shader("./res/shaders/plan/plan.vs", "./res/shaders/plan/plan.fs");
-    Shader depthPlanShader("res/shaders/plan/depth.vs", "res/shaders/plan/depth.fs");
 
     GLuint planText = loadTexture(texturePaths, true);
     planShader.use();
@@ -158,13 +156,13 @@ int main()
     gltfshader.use();
     gltfshader.setInt("tex", 0);
 
-    Object plan(planVAO, 6, &planShader, &depthPlanShader, planText);
-    Object lightCube(lightCubeVAO, 36, &lightShader, &depthLightShader);
+    Object plan(planVAO, 6, &planShader, planText);
+    Object lightCube(lightCubeVAO, 36, &lightShader);
     Object gltfObj(&gltf_model, &gltfshader, &depthGltfShader);
 
     // shadows
     // -------
-    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
     unsigned int depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);
     // create depth texture
