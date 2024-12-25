@@ -37,11 +37,11 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     // ---------------
     // updaate the light positions
     float angle = 3.14;
-    //lightPos = {cos(angle + glfwGetTime()), 0.5, sin(angle + glfwGetTime())};
+    lightPos = {cos(angle + glfwGetTime()), 0.5, sin(angle + glfwGetTime())};
 
     plan.shader->use();
     plan.shader->setVec3("viewPos", camera.Position);
-    plan.shader->setVec3("lightPos", lightPos.x, lightPos.y - .5f, lightPos.z);
+    plan.shader->setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
     plan.shader->setMat4("projection", projection);
     plan.shader->setMat4("view", view);
     plan.shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
@@ -95,24 +95,10 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
 void Render::renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 const& lightSpaceMatrix)
 {
     glm::mat4 model = glm::mat4(1.0f);
-    // plan
-    model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
-    plan.depthShader->use();
-    plan.depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-    plan.depthShader->setMat4("model", model);
-    plan.drawWithoutTexture();
     // gltf model
     model = glm::scale(model, glm::vec3(0.25f));
     gltf_model.depthShader->use();
     gltf_model.depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
     gltf_model.depthShader->setMat4("model", model);
     gltf_model.drawWithoutTexture();
-    // light
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, lightPos);
-    model = glm::scale(model, glm::vec3(0.2f));
-    light.depthShader->use();
-    light.depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-    light.depthShader->setMat4("model", model);
-    light.drawWithoutTexture();
 }
