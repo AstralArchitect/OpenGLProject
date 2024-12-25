@@ -5,29 +5,32 @@
 
 #include <iostream>
 
-Object::Object(GltfModel *new_model, Shader *new_shader)
+Object::Object(GltfModel *new_model, Shader *new_shader, Shader *new_depthShader)
 { 
     model = new_model;
     shader = new_shader;
+    depthShader = new_depthShader;
     gltf = true;
 
     VAO = 0;
     numVertices = 0;
 }
 
-Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader)
+Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader, Shader *new_depthShader)
 {
     VAO = new_VAO;
     numVertices = new_numVertices;
     shader = new_shader;
+    depthShader = new_depthShader;
     gltf = false;
 }
 
-Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader, GLuint const& new_text)
+Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader, Shader *new_depthShader, GLuint const& new_text)
 {
     VAO = new_VAO;
     numVertices = new_numVertices;
     shader = new_shader;
+    depthShader = new_depthShader;
     texture = new_text;
 
     gltf = false;
@@ -53,20 +56,14 @@ void Object::drawWithoutTexture()
     if (gltf)
     {
         model->drawWithoutTextures();
-        shader->unuse();
+        depthShader->unuse();
         return;
     }
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, numVertices);
     // unbinde shader & VAO
     glBindVertexArray(0);
-    shader->unuse();
-}
-
-void Object::setWorld(glm::mat4 projection, glm::mat4 view)
-{
-    shader->setMat4("projection", projection);
-    shader->setMat4("view", view);
+    depthShader->unuse();
 }
 
 GLuint Object::getText()

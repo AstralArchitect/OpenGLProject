@@ -92,22 +92,27 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     light.draw();
 }
 
-// le problème là dedans c'est que le  machin draw avec un shader qui n'as pas les bon layouts. Le shader en a
-// que 1 alors que le plan et le gltf_model en ont +. Et donc ça fait de la merde (GL error 1282)
-void Render::renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, Shader const& shader)
+void Render::renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 const& lightSpaceMatrix)
 {
     glm::mat4 model = glm::mat4(1.0f);
     // plan
     model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
-    shader.setMat4("model", model);
-    plan.draw();
+    plan.depthShader->use();
+    plan.depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    plan.depthShader->setMat4("model", model);
+    plan.drawWithoutTexture();
     // gltf model
     model = glm::scale(model, glm::vec3(0.25f));
-    shader.setMat4("model", model);
+    gltf_model.depthShader->use();
+    gltf_model.depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    gltf_model.depthShader->setMat4("model", model);
     gltf_model.drawWithoutTexture();
     // light
     model = glm::mat4(1.0f);
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.2f));
-    shader.setMat4("model", model);
+    light.depthShader->use();
+    light.depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    light.depthShader->setMat4("model", model);
+    light.drawWithoutTexture();
 }

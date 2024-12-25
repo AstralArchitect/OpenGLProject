@@ -139,10 +139,12 @@ int main()
     glEnableVertexAttribArray(0);
 
     Shader lightShader = Shader("./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
+    Shader depthLightShader("res/shaders/light_cube/depth.vs", "res/shaders/light_cube/depth.fs");
 
     char* texturePaths = (char*)"res/textures/bois.jpg";
 
     Shader planShader = Shader("./res/shaders/plan/plan.vs", "./res/shaders/plan/plan.fs");
+    Shader depthPlanShader("res/shaders/plan/depth.vs", "res/shaders/plan/depth.fs");
 
     GLuint planText = loadTexture(texturePaths, true);
     planShader.use();
@@ -151,15 +153,14 @@ int main()
     
     GltfModel gltf_model("./res/models/test-model.glb");
     Shader gltfshader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
+    Shader depthGltfShader("res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
     // create the model texture
     gltfshader.use();
     gltfshader.setInt("tex", 0);
 
-    Shader simpleDepthShader("res/shaders/simpleDepthShader/vertex.vs", "res/shaders/simpleDepthShader/fragment.fs");
-
-    Object plan(planVAO, 6, &planShader, planText);
-    Object lightCube(lightCubeVAO, 36, &lightShader);
-    Object gltfObj(&gltf_model, &gltfshader);
+    Object plan(planVAO, 6, &planShader, &depthPlanShader, planText);
+    Object lightCube(lightCubeVAO, 36, &lightShader, &depthLightShader);
+    Object gltfObj(&gltf_model, &gltfshader, &depthGltfShader);
 
     // shadows
     // -------
@@ -212,14 +213,11 @@ int main()
         lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
         lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
-        // render scene from light's point of view
-        simpleDepthShader.use();
-        simpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
-            Render::renderScene(window, plan, gltfObj, lightCube, simpleDepthShader);
+            Render::renderScene(window, plan, gltfObj, lightCube, lightSpaceMatrix);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // reset viewport
