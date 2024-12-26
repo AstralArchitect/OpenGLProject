@@ -21,8 +21,6 @@ extern Camera camera;
 extern float deltaTime;
 extern float lastFrame;
 
-extern const double PI;
-
 extern glm::vec3 lightPos;
 
 void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix, GLuint depthMap)
@@ -35,21 +33,20 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
 
     // The plan object
     // ---------------
-    // updaate the light positions
-    float angle = 3.14;
-    lightPos = {cos(angle + glfwGetTime()), 0.5, sin(angle + glfwGetTime())};
+    // update the light positions
+    lightPos = {cos(glfwGetTime() / 2), 1.0, sin(glfwGetTime() / 2)};
 
     plan.shader->use();
     plan.shader->setVec3("viewPos", camera.Position);
-    plan.shader->setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
-    plan.shader->setMat4("projection", projection);
-    plan.shader->setMat4("view", view);
+    plan.shader->setVec3("lightPos", lightPos);
     plan.shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
     // world transformation
     model = glm::mat4(1.0f);
     model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
     plan.shader->setMat4("model", model);
+    plan.shader->setMat4("view", view);
+    plan.shader->setMat4("projection", projection);
 
     // bind textures on corresponding texture units
     glActiveTexture(GL_TEXTURE0);
@@ -69,8 +66,8 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     model = glm::mat4(1.0f);
     model = glm::scale(model, glm::vec3(0.25f));
     gltf_model.shader->setMat4("model", model);
-
-    gltf_model.shader->setVec3("color", glm::vec3(1.0f, 0.5f, 0.5f));
+    gltf_model.shader->setMat4("view", view);
+    gltf_model.shader->setMat4("projection", projection);
 
     // draw
     gltf_model.draw();
