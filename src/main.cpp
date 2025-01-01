@@ -30,6 +30,9 @@ float lastFrame = 0.0f;
 // -------------
 glm::vec3 lightPos;
 
+// background strength
+float backgroundStrength = 0.1f;
+
 int main()
 {
     // glfw window creation
@@ -198,7 +201,7 @@ int main()
 
         // render
         // ------
-        glClearColor(0.1, 0.1, 0.1, 0.1);
+        glClearColor(backgroundStrength, backgroundStrength, backgroundStrength, 0.1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // 1. render depth of scene to texture (from light's perspective)
