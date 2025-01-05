@@ -11,8 +11,8 @@ extern Camera camera;
 
 extern float deltaTime;
 
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
+extern unsigned int SCR_WIDTH;
+extern unsigned int SCR_HEIGHT;
 double lastX = SCR_WIDTH / 2.0;
 double lastY = SCR_HEIGHT / 2.0;
 bool firstMouse = true;
