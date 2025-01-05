@@ -23,6 +23,9 @@ extern float lastFrame;
 
 extern glm::vec3 lightPos;
 
+// background strength
+extern float backgroundStrength;
+
 void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix, GLuint depthMap)
 {
     // view/projection/world transformations
@@ -47,6 +50,8 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     plan.shader->setMat4("model", model);
     plan.shader->setMat4("view", view);
     plan.shader->setMat4("projection", projection);
+
+    plan.shader->setFloat("ambientStrength", backgroundStrength);
 
     // bind textures on corresponding texture units
     glActiveTexture(GL_TEXTURE0);
