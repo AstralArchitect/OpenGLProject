@@ -27,6 +27,8 @@ extern glm::vec3 pointLightColor;
 // background strength
 extern glm::vec3 backgroundColor;
 
+extern bool hardMode;
+
 void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix, GLuint depthMap)
 {
     // view/projection/world transformations
@@ -51,6 +53,16 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     plan.shader->setMat4("model", model);
     plan.shader->setMat4("view", view);
     plan.shader->setMat4("projection", projection);
+
+    if (hardMode)
+    {
+        plan.shader->setBool("hardShadows", true);
+    }
+    else
+    {
+        plan.shader->setBool("hardShadows", false);
+    }
+    
 
     plan.shader->setVec3("ambientStrength", backgroundColor);
 

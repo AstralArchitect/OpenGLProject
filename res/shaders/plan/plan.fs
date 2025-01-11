@@ -24,6 +24,8 @@ vec3 lightPos;
 
 uniform vec3 ambientColor;
 
+uniform bool hardShadows;
+
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
     // perform perspective divide
@@ -34,15 +36,30 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     float currentDepth = projCoords.z;
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for(float x = -2; x <= 2; x += .1)
+    if(hardShadows)
     {
-        for(float y = -2; y <= 2; y += .1)
+        for(float x = -2; x <= 2; x += .02)
         {
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
-            shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
+            for(float y = -2; y <= 2; y += .02)
+            {
+                float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+                shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
+            }
         }
+        shadow /= 200 * 200;
     }
-    shadow /= 40 * 40;
+    else
+    {
+        for(float x = -1; x <= 1; x++)
+        {
+            for(float y = -1; y <= 1; y++)
+            {
+                float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+                shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
+            }
+        }
+        shadow /= 9.0;
+    }
 
     if(projCoords.z > 1.0)
         shadow = 0.0;
