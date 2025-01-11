@@ -16,8 +16,8 @@
 #include <cstdio>
 
 // settings
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
+unsigned int SCR_WIDTH  = 1920;
+unsigned int SCR_HEIGHT = 1080;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 2.7f));
@@ -28,10 +28,11 @@ float lastFrame = 0.0f;
 
 // lighting info
 // -------------
-glm::vec3 lightPos;
+glm::vec3 lightPos(1.0/*cos(0)*/, 1.0, 0.0f/*sin(0)*/);
+glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
 
 // background strength
-float backgroundStrength = 0.1f;
+glm::vec3 backgroundColor(0.1f, 0.1f, 0.1f);
 
 int main()
 {
@@ -161,9 +162,34 @@ int main()
     Object lightCube(lightCubeVAO, 36, &lightShader);
     Object gltfObj(&gltf_model, &gltfshader, &depthGltfShader);
 
+    // uniform buffer
+    // --------------
+    unsigned int light_index = glGetUniformBlockIndex(planShader.ID, "Light");
+    glUniformBlockBinding(planShader.ID, light_index, 0);
+
+    unsigned int uboLight;
+    glGenBuffers(1, &uboLight);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, uboLight);
+    glBufferData(GL_UNIFORM_BUFFER, 28, NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboLight, 0, 28);
+    
+    struct Light {
+        glm::vec3 color      = pointLightColor;
+        float lightConstant  = 1.0f;
+        float lightLinear    = .35f;
+        float lightQuadratic = .44f;   
+    } light;
+
+    glBindBuffer(GL_UNIFORM_BUFFER, uboLight);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, 28, &light);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
     // shadows
     // -------
-    const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;
+    const unsigned int SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
     unsigned int depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);
     // create depth texture
@@ -201,14 +227,14 @@ int main()
 
         // render
         // ------
-        glClearColor(backgroundStrength, backgroundStrength, backgroundStrength, 0.1);
+        glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 0.1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // 1. render depth of scene to texture (from light's perspective)
         // --------------------------------------------------------------
         glm::mat4 lightProjection, lightView;
         glm::mat4 lightSpaceMatrix;
-        float near_plane = 1.0f, far_plane = 7.5f;
+        float near_plane = .1f, far_plane = 7.5f;
         lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
         lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
@@ -226,7 +252,6 @@ int main()
         // 2. render scene as normal using the generated depth/shadow map  
         // --------------------------------------------------------------
         Render::renderFrame(window, plan, gltfObj, lightCube, lightSpaceMatrix, depthMap);
-
 
         GLenum err = 1;
         while (err != 0) {

@@ -12,9 +12,17 @@ uniform sampler2D colorMap;
 uniform sampler2D shadowMap;
 
 uniform vec3 viewPos;
-uniform vec3 lightPos;
 
-uniform float ambientStrength;
+layout (std140) uniform Light {
+                            // base alignement      // aligned offset
+    vec3  lightColor;       // 16                   // 0
+    float lightConstant;    // 4                    // 16
+    float lightLinear;      // 4                    // 20
+    float lightQuadratic;   // 4                    // 24
+};
+vec3 lightPos;
+
+uniform vec3 ambientColor;
 
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
@@ -26,15 +34,15 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     float currentDepth = projCoords.z;
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for(int x = -1; x <= 1; ++x)
+    for(float x = -2; x <= 2; x += .1)
     {
-        for(int y = -1; y <= 1; ++y)
+        for(float y = -2; y <= 2; y += .1)
         {
             float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
             shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
         }
     }
-    shadow /= 9.0;
+    shadow /= 40 * 40;
 
     if(projCoords.z > 1.0)
         shadow = 0.0;
@@ -45,9 +53,8 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 void main() {
     vec3 color = texture(colorMap, fs_in.TexCoords).rgb;
     vec3 normal = normalize(fs_in.Normal);
-    vec3 lightColor = vec3(1.0);
     // ambient
-    vec3 ambient = color * ambientStrength;
+    vec3 ambient = color * ambientColor;
     // diffuse
     vec3 lightDir = normalize(lightPos - fs_in.FragPos);
     float diff = max(dot(lightDir, normal), 0.0);
@@ -59,6 +66,13 @@ void main() {
     vec3 specular = spec * lightColor;
     // calculate shadow
     float shadow = ShadowCalculation(fs_in.FragPosLightSpace);
+    // attenuation
+    float distance = length(lightPos - fs_in.FragPos);
+    float attenuation = 1.0 / (lightConstant + lightLinear * distance + lightQuadratic * distance);
+    ambient *= attenuation;
+    diffuse *= attenuation;
+    specular *= attenuation;
+
     vec3 result = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 
     result = pow(result, vec3(1.0/2.2)); // gamma correction

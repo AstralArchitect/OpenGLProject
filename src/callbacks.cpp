@@ -95,8 +95,8 @@ void Callback::mouse(GLFWwindow * window, double xposIn, double yposIn) {
 // ---------------------------------------------------------------------------------------------
 void Callback::framebuffer_size(GLFWwindow* window, int width, int height)
 {
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
+    SCR_WIDTH = width;
+    SCR_HEIGHT = height;
     glViewport(0, 0, width, height);
 }
 
@@ -121,7 +121,7 @@ GLFWwindow *createContextAndWindows(const unsigned int SCR_WIDTH, const unsigned
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, WindowTitle, NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, WindowTitle, NULL, NULL);
     if (window == NULL)
     {
         glfwTerminate();

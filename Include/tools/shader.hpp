@@ -12,6 +12,9 @@
 class Shader
 {
 public:
+    // ID of the shader
+    // ----------------
+    unsigned int ID;
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
     Shader(std::string const& vertexPath, std::string const& fragmentPath);
@@ -56,9 +59,6 @@ private:
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
     static void checkCompileErrors(GLuint shader, std::string type);
-    // ID of the shader
-    // ----------------
-    unsigned int ID;
 };
 
 #endif

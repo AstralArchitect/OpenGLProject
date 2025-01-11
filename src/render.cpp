@@ -11,8 +11,8 @@
 #include "render.hpp"
 
 // settings
-extern const unsigned int SCR_WIDTH = 1920;
-extern const unsigned int SCR_HEIGHT = 1080;
+extern unsigned int SCR_WIDTH;
+extern unsigned int SCR_HEIGHT;
 
 // camera
 extern Camera camera;
@@ -22,9 +22,10 @@ extern float deltaTime;
 extern float lastFrame;
 
 extern glm::vec3 lightPos;
+extern glm::vec3 pointLightColor;
 
 // background strength
-extern float backgroundStrength;
+extern glm::vec3 backgroundColor;
 
 void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix, GLuint depthMap)
 {
@@ -37,7 +38,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     // The plan object
     // ---------------
     // update the light positions
-    lightPos = {cos(glfwGetTime() / 2), 1.0, sin(glfwGetTime() / 2)};
+    lightPos = {cos(glfwGetTime() / 2), 1.0f, sin(glfwGetTime() / 2)};
 
     plan.shader->use();
     plan.shader->setVec3("viewPos", camera.Position);
@@ -51,7 +52,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     plan.shader->setMat4("view", view);
     plan.shader->setMat4("projection", projection);
 
-    plan.shader->setFloat("ambientStrength", backgroundStrength);
+    plan.shader->setVec3("ambientStrength", backgroundColor);
 
     // bind textures on corresponding texture units
     glActiveTexture(GL_TEXTURE0);
@@ -88,7 +89,6 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     model = glm::scale(model, glm::vec3(0.2f));
     light.shader->setMat4("model", model);
         
-    glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
     light.shader->setVec3("color", pointLightColor);
 
     light.draw();
