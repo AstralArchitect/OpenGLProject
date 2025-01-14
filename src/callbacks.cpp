@@ -60,6 +60,17 @@ void Callback::processInput(GLFWwindow *window)
         camera.ProcessKeyboard(RIGHT, deltaTime);
         camera.ProcessMouseMovement(-(deltaTime) * 500, 0);
     }
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+        //camera.ProcessMouseMovement(0, deltaTime * 500);
+    }
+    else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+        //camera.ProcessMouseMovement(0, -(deltaTime) * 500);
+    }
+    
     if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
         if (!isFullscreen) {
             glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
@@ -71,16 +82,26 @@ void Callback::processInput(GLFWwindow *window)
             glfwSetWindowMonitor(window, NULL, windowedPosX, windowedPosY, windowedWidth, windowedHeight, 0);
         }
         isFullscreen = !isFullscreen;
+        sleep_ms(100);
     }
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
     {
-        hardMode = true;
-        glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
-        glfwGetWindowPos(window, &windowedPosX, &windowedPosY);
+        if (!hardMode)
+        {
+            glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
+            glfwGetWindowPos(window, &windowedPosX, &windowedPosY);
 
-        const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
-        isFullscreen = true;
+            const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
+            isFullscreen = true;
+        }
+        else
+        {
+            glfwSetWindowMonitor(window, NULL, windowedPosX, windowedPosY, windowedWidth, windowedHeight, 0);
+            isFullscreen = false;
+        }
+        hardMode = !hardMode;
+        sleep_ms(100);
     }
     
 }

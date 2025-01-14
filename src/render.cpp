@@ -41,6 +41,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     // ---------------
     // update the light positions
     lightPos = {cos(glfwGetTime() / 2), 1.0f, sin(glfwGetTime() / 2)};
+    backgroundColor = glm::vec3(0.0f, 0.0f, 1.0f);
 
     plan.shader->use();
     plan.shader->setVec3("viewPos", camera.Position);
@@ -63,8 +64,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
         plan.shader->setBool("hardShadows", false);
     }
     
-
-    plan.shader->setVec3("ambientStrength", backgroundColor);
+    plan.shader->setVec3("ambientColor", backgroundColor);
 
     // bind textures on corresponding texture units
     glActiveTexture(GL_TEXTURE0);
@@ -83,6 +83,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     // world transformation
     model = glm::mat4(1.0f);
     model = glm::scale(model, glm::vec3(0.25f));
+    model = glm::translate(model, glm::vec3(0.0f, 2.0f, 0.0f));
     gltf_model.shader->setMat4("model", model);
     gltf_model.shader->setMat4("view", view);
     gltf_model.shader->setMat4("projection", projection);
@@ -111,6 +112,7 @@ void Render::renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, O
     glm::mat4 model = glm::mat4(1.0f);
     // gltf model
     model = glm::scale(model, glm::vec3(0.25f));
+    model = glm::translate(model, glm::vec3(0.0f, 2.0f, 0.0f));
     gltf_model.depthShader->use();
     gltf_model.depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
     gltf_model.depthShader->setMat4("model", model);
