@@ -20,7 +20,7 @@ layout (std140) uniform Light {
     float lightLinear;      // 4                    // 20
     float lightQuadratic;   // 4                    // 24
 };
-vec3 lightPos;
+uniform vec3 lightPos;
 
 uniform vec3 ambientColor;
 
