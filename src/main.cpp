@@ -34,8 +34,6 @@ glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
 // background strength
 glm::vec3 backgroundColor(0.15f, 0.15f, 0.15f);
 
-bool hardMode = false;
-
 int main()
 {
     // glfw window creation

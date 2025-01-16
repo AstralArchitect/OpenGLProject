@@ -16,7 +16,6 @@ extern unsigned int SCR_HEIGHT;
 double lastX = SCR_WIDTH / 2.0;
 double lastY = SCR_HEIGHT / 2.0;
 bool firstMouse = true;
-extern bool hardMode;
 
 #ifdef _WIN32
 #include <windows.h>
@@ -82,25 +81,6 @@ void Callback::processInput(GLFWwindow *window)
             glfwSetWindowMonitor(window, NULL, windowedPosX, windowedPosY, windowedWidth, windowedHeight, 0);
         }
         isFullscreen = !isFullscreen;
-        sleep_ms(100);
-    }
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-    {
-        if (!hardMode)
-        {
-            glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
-            glfwGetWindowPos(window, &windowedPosX, &windowedPosY);
-
-            const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-            glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
-            isFullscreen = true;
-        }
-        else
-        {
-            glfwSetWindowMonitor(window, NULL, windowedPosX, windowedPosY, windowedWidth, windowedHeight, 0);
-            isFullscreen = false;
-        }
-        hardMode = !hardMode;
         sleep_ms(100);
     }
     
