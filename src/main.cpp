@@ -140,32 +140,24 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    Shader lightShader = Shader("./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
+    Object lightCube(lightCubeVAO, 36, "./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
 
-    char* texturePaths = (char*)"res/textures/bois.jpg";
+    GLuint planText = loadTexture((char*)"res/textures/bois.jpg", true);
+    Object plan(planVAO, 6, "res/shaders/plan/plan.vs", "res/shaders/plan/plan.fs", planText);
+    plan.shader->use();
+    plan.shader->setInt("colorMap", 0);
+    plan.shader->setInt("shadowMap", 1);
 
-    Shader planShader = Shader("./res/shaders/plan/plan.vs", "./res/shaders/plan/plan.fs");
-
-    GLuint planText = loadTexture(texturePaths, true);
-    planShader.use();
-    planShader.setInt("colorMap", 0);
-    planShader.setInt("shadowMap", 1);
-    
-    GltfModel gltf_model("./res/models/test-model.glb");
-    Shader gltfshader("res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs");
     Shader depthGltfShader("res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
+    Object gltfObj("./res/models/test-model.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", &depthGltfShader);
     // create the model texture
-    gltfshader.use();
-    gltfshader.setInt("tex", 0);
-
-    Object plan(planVAO, 6, &planShader, planText);
-    Object lightCube(lightCubeVAO, 36, &lightShader);
-    Object gltfObj(&gltf_model, &gltfshader, &depthGltfShader);
+    gltfObj.shader->use();
+    gltfObj.shader->setInt("tex", 0);
 
     // uniform buffer
     // --------------
-    unsigned int light_index = glGetUniformBlockIndex(planShader.ID, "Light");
-    glUniformBlockBinding(planShader.ID, light_index, 0);
+    unsigned int light_index = glGetUniformBlockIndex(plan.shader->ID, "Light");
+    glUniformBlockBinding(plan.shader->ID, light_index, 0);
 
     unsigned int uboLight;
     glGenBuffers(1, &uboLight);

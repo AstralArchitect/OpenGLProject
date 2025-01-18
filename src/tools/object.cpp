@@ -5,35 +5,33 @@
 
 #include <iostream>
 
-Object::Object(GltfModel *new_model, Shader *new_shader, Shader *new_depthShader)
-{ 
-    model = new_model;
-    shader = new_shader;
-    depthShader = new_depthShader;
-    gltf = true;
-
-    VAO = 0;
-    numVertices = 0;
-}
-
-Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader)
+Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, std::string vertexPath, std::string fragmentPath)
 {
     VAO = new_VAO;
     numVertices = new_numVertices;
-    shader = new_shader;
+    shader = new Shader(vertexPath, fragmentPath);
     depthShader = nullptr;
     gltf = false;
 }
 
-Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, Shader *new_shader, GLuint const& new_text)
+Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, std::string vertexPath, std::string fragmentPath, GLuint const& new_text)
 {
     VAO = new_VAO;
     numVertices = new_numVertices;
-    shader = new_shader;
+    shader = new Shader(vertexPath, fragmentPath);
     depthShader = nullptr;
     texture = new_text;
 
     gltf = false;
+}
+
+Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, Shader *new_depthShader)
+{
+    model = new GltfModel((const char *)modelPath.c_str());
+    shader = new Shader(vertexPath, fragmentPath);
+
+    depthShader = new_depthShader;
+    gltf = true;
 }
 
 void Object::draw()
