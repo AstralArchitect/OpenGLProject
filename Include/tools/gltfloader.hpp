@@ -54,6 +54,7 @@ class GltfNode {
 class GltfModel {
     public:
         GltfModel(const char* filename);
+        // TODO: créer un destructeur pour cette class
         void draw();
         void drawWithoutTextures();
 

@@ -64,22 +64,6 @@ int main()
         -0.5f, -0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
         -0.5f, -0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  4.0f
     };
-    unsigned int planVBO, planVAO;
-
-    glGenVertexArrays(1, &planVAO);
-    glGenBuffers(1, &planVBO);
-
-    glBindVertexArray(planVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, planVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(planVertices), planVertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
 
     float lightCubeVertices[]{
         // positions
@@ -125,25 +109,11 @@ int main()
         -0.5f,  0.5f,  0.5f,
         -0.5f,  0.5f, -0.5f
     };
-    unsigned int LightCubeVBO, lightCubeVAO;
 
-    glGenBuffers(1, &LightCubeVBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, LightCubeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(lightCubeVertices), lightCubeVertices, GL_STATIC_DRAW);
-    
-    glGenVertexArrays(1, &lightCubeVAO);
-    glBindVertexArray(lightCubeVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, LightCubeVBO);
-    // note that we update the lamp's position attribute's stride to reflect the updated buffer data
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    Object lightCube(lightCubeVAO, 36, "./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
+    Object lightCube(lightCubeVertices, sizeof(lightCubeVertices), true, false, false, "./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
 
     GLuint planText = loadTexture((char*)"res/textures/bois.jpg", true);
-    Object plan(planVAO, 6, "res/shaders/plan/plan.vs", "res/shaders/plan/plan.fs", planText);
+    Object plan(planVertices, sizeof(planVertices), true, true, true, "res/shaders/plan/plan.vs", "res/shaders/plan/plan.fs", planText);
     plan.shader->use();
     plan.shader->setInt("colorMap", 0);
     plan.shader->setInt("shadowMap", 1);
@@ -181,28 +151,9 @@ int main()
 
     // shadows
     // -------
-    const unsigned int SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;
-    unsigned int depthMapFBO;
-    glGenFramebuffers(1, &depthMapFBO);
-    // create depth texture
-    unsigned int depthMap;
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-    // attach depth texture as FBO's depth buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+    Callback::Shadow_info shadow_info = {4096, 4096, 0, 0}; 
+    shadow_info.init();
+    
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -231,8 +182,8 @@ int main()
         lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
 
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glViewport(0, 0, shadow_info.SHADOW_WIDTH, shadow_info.SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, shadow_info.depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
             Render::renderScene(window, plan, gltfObj, lightCube, lightSpaceMatrix);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -243,7 +194,7 @@ int main()
 
         // 2. render scene as normal using the generated depth/shadow map  
         // --------------------------------------------------------------
-        Render::renderFrame(window, plan, gltfObj, lightCube, lightSpaceMatrix, depthMap);
+        Render::renderFrame(window, plan, gltfObj, lightCube, lightSpaceMatrix, shadow_info.depthMap);
 
         GLenum err = 1;
         while (err != 0) {

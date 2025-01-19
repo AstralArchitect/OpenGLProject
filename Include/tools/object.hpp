@@ -18,15 +18,20 @@ private:
     GLuint texture;
     // mode
     bool gltf;
+
+    // create VAO from vertices, verticesSize must be the size in byte
+    void createVAO(float *vertices, unsigned long verticesSize, bool UVs, bool normals, bool texCoords);
 public:
     // shader
     Shader *shader;
     Shader *depthShader;
 
-    // constructors / destructors
+    // constructors
     Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, Shader *new_depthShader);
-    Object(unsigned int const& new_VAO, unsigned int const& numVertices, std::string vertexPath, std::string fragmentPath);
-    Object(unsigned int const& new_VAO, unsigned int const& numVertices, std::string vertexPath, std::string fragmentPath, GLuint const& new_text);
+    Object(float *vertices, unsigned long verticesSizeInByte, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath);
+    Object(float *vertices, unsigned long verticesSizeInByte, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath, GLuint const& new_text);
+    // destructor
+    ~Object();
 
     // shader's world properties func
     void setWorld(glm::mat4 projection, glm::mat4 view);

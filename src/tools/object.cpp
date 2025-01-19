@@ -5,19 +5,19 @@
 
 #include <iostream>
 
-Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, std::string vertexPath, std::string fragmentPath)
+Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath)
 {
-    VAO = new_VAO;
-    numVertices = new_numVertices;
+    createVAO(vertices, verticesSize, UVs, normals, texCoords);
+    numVertices = verticesSize / sizeof(float);
     shader = new Shader(vertexPath, fragmentPath);
     depthShader = nullptr;
     gltf = false;
 }
 
-Object::Object(unsigned int const& new_VAO, unsigned int const& new_numVertices, std::string vertexPath, std::string fragmentPath, GLuint const& new_text)
+Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath, GLuint const& new_text)
 {
-    VAO = new_VAO;
-    numVertices = new_numVertices;
+    createVAO(vertices, verticesSize, UVs, normals, texCoords);
+    numVertices = verticesSize / sizeof(float);
     shader = new Shader(vertexPath, fragmentPath);
     depthShader = nullptr;
     texture = new_text;
@@ -32,6 +32,22 @@ Object::Object(std::string modelPath, std::string vertexPath, std::string fragme
 
     depthShader = new_depthShader;
     gltf = true;
+}
+
+Object::~Object()
+{
+    if (gltf)
+    {
+        delete model;
+        delete shader;
+
+        depthShader = nullptr;
+        return;
+    }
+
+    numVertices = 0;
+    VAO = 0;
+    texture = 0;
 }
 
 void Object::draw()
@@ -67,4 +83,43 @@ void Object::drawWithoutTexture()
 GLuint Object::getText()
 {
     return texture;
+}
+
+void Object::createVAO(float *vertices, unsigned long verticesSize, bool UVs, bool normals, bool texCoords)
+{
+    unsigned int VBO;
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, verticesSize, vertices, GL_STATIC_DRAW);
+
+    int total_offset = 0;
+    total_offset += UVs ? 3 : 0;
+    total_offset += normals ? 3 : 0; 
+    total_offset += texCoords ? 2 : 0;
+    total_offset *= sizeof(float);
+
+    int actual_offset = 0;
+    if (UVs)
+    {
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, total_offset, (void*)actual_offset);
+        glEnableVertexAttribArray(0);
+        actual_offset += 3;
+    }
+    if (normals)
+    {
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, total_offset, (void*)(actual_offset * sizeof(float)));
+        glEnableVertexAttribArray(1);
+        actual_offset += 3;
+    }
+    if (texCoords)
+    {
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, total_offset, (void*)(actual_offset * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        actual_offset += 2;
+    }
 }
