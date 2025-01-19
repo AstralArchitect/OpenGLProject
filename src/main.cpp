@@ -112,14 +112,14 @@ int main()
 
     Object lightCube(lightCubeVertices, sizeof(lightCubeVertices), true, false, false, "./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
 
-    GLuint planText = loadTexture((char*)"res/textures/bois.jpg", true);
+    std::vector<GLuint> planText = {loadTexture((char*)"res/textures/bois.jpg", true), loadTexture((char*)"res/textures/bois_specular.jpg", true)};
     Object plan(planVertices, sizeof(planVertices), true, true, true, "res/shaders/plan/plan.vs", "res/shaders/plan/plan.fs", planText);
     plan.shader->use();
     plan.shader->setInt("colorMap", 0);
-    plan.shader->setInt("shadowMap", 1);
+    plan.shader->setInt("specularMap", 1);
+    plan.shader->setInt("shadowMap", 2);
 
-    Shader depthGltfShader("res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
-    Object gltfObj("./res/models/test-model.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", &depthGltfShader);
+    Object gltfObj("./res/models/test-model.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", "res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
     // create the model texture
     gltfObj.shader->use();
     gltfObj.shader->setInt("tex", 0);

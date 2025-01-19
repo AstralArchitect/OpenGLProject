@@ -9,6 +9,7 @@ in VS_OUT {
 } fs_in;
 
 uniform sampler2D colorMap;
+uniform sampler2D specularMap;
 uniform sampler2D shadowMap;
 
 uniform vec3 viewPos;
@@ -63,7 +64,7 @@ void main() {
     vec3 viewDir = normalize(viewPos - fs_in.FragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 256);
-    vec3 specular = spec * lightColor;
+    vec3 specular = spec * lightColor * texture(specularMap, fs_in.TexCoords).rgb;
     // calculate shadow
     float shadow = ShadowCalculation(fs_in.FragPosLightSpace);
     // attenuation

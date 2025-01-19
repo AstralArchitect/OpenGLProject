@@ -14,23 +14,23 @@ Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool norma
     gltf = false;
 }
 
-Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath, GLuint const& new_text)
+Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath, std::vector<GLuint> new_texts)
 {
     createVAO(vertices, verticesSize, UVs, normals, texCoords);
     numVertices = verticesSize / sizeof(float);
     shader = new Shader(vertexPath, fragmentPath);
     depthShader = nullptr;
-    texture = new_text;
+    textures = new_texts;
 
     gltf = false;
 }
 
-Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, Shader *new_depthShader)
+Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, std::string depthVertexPath, std::string depthFragmentPath)
 {
     model = new GltfModel((const char *)modelPath.c_str());
     shader = new Shader(vertexPath, fragmentPath);
+    depthShader = new Shader(depthVertexPath, depthFragmentPath);
 
-    depthShader = new_depthShader;
     gltf = true;
 }
 
@@ -40,14 +40,14 @@ Object::~Object()
     {
         delete model;
         delete shader;
+        delete depthShader;
 
-        depthShader = nullptr;
         return;
     }
 
+    textures.clear();
+    
     numVertices = 0;
-    VAO = 0;
-    texture = 0;
 }
 
 void Object::draw()
@@ -80,15 +80,15 @@ void Object::drawWithoutTexture()
     depthShader->unuse();
 }
 
-GLuint Object::getText()
+GLuint Object::getText(unsigned short indice)
 {
-    return texture;
+    return textures[indice];
 }
 
 void Object::createVAO(float *vertices, unsigned long verticesSize, bool UVs, bool normals, bool texCoords)
 {
     unsigned int VBO;
-
+    
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 

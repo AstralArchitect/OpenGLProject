@@ -11,11 +11,11 @@ class Object
 {
 private:
     // VAO / model
-    unsigned int VAO;
+    GLuint VAO;
     GltfModel *model;
     
     unsigned int numVertices;
-    GLuint texture;
+    std::vector<GLuint> textures;
     // mode
     bool gltf;
 
@@ -27,9 +27,9 @@ public:
     Shader *depthShader;
 
     // constructors
-    Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, Shader *new_depthShader);
+    Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, std::string depthVertexPath, std::string depthFragmentPath);
     Object(float *vertices, unsigned long verticesSizeInByte, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath);
-    Object(float *vertices, unsigned long verticesSizeInByte, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath, GLuint const& new_text);
+    Object(float *vertices, unsigned long verticesSizeInByte, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath, std::vector<GLuint> new_text);
     // destructor
     ~Object();
 
@@ -37,7 +37,7 @@ public:
     void setWorld(glm::mat4 projection, glm::mat4 view);
 
     // text func
-    GLuint getText();
+    GLuint getText(unsigned short indice);
 
     // draw funcs
     void draw();

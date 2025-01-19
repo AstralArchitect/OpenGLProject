@@ -56,8 +56,10 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
 
     // bind textures on corresponding texture units
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, plan.getText());
+    glBindTexture(GL_TEXTURE_2D, plan.getText(0));
     glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, plan.getText(1));
+    glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, depthMap);
 
     plan.draw();
