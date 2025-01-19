@@ -75,7 +75,9 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
 
     // world transformation
     model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(0.25f));
+    model = glm::translate(model, glm::vec3(1.0 / 2.5, 0.39f, 0.0f));
+    model = glm::scale(model, glm::vec3(1.0f / 8));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     gltf_model.shader->setMat4("model", model);
     gltf_model.shader->setMat4("view", view);
     gltf_model.shader->setMat4("projection", projection);
@@ -103,7 +105,9 @@ void Render::renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, O
 {
     glm::mat4 model = glm::mat4(1.0f);
     // gltf model
-    model = glm::scale(model, glm::vec3(0.25f));
+    model = glm::translate(model, glm::vec3(1.0 / 2.5, 0.39f, 0.0f));
+    model = glm::scale(model, glm::vec3(1.0f / 8));
+    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     gltf_model.depthShader->use();
     gltf_model.depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
     gltf_model.depthShader->setMat4("model", model);

@@ -119,7 +119,7 @@ int main()
     plan.shader->setInt("specularMap", 1);
     plan.shader->setInt("shadowMap", 2);
 
-    Object gltfObj("./res/models/test-model.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", "res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
+    Object gltfObj("./res/models/untitled.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", "res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
     // create the model texture
     gltfObj.shader->use();
     gltfObj.shader->setInt("tex", 0);
