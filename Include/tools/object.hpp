@@ -18,6 +18,7 @@ private:
     std::vector<GLuint> textures;
     // mode
     bool gltf;
+    bool depth;
 
     // create VAO from vertices, verticesSize must be the size in byte
     void createVAO(float *vertices, unsigned long verticesSize, bool UVs, bool normals, bool texCoords);
@@ -28,6 +29,7 @@ public:
 
     // constructors
     Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, std::string depthVertexPath, std::string depthFragmentPath);
+    Object(std::string modelPath, std::string vertexPath, std::string fragmentPath);
     Object(float *vertices, unsigned long verticesSizeInByte, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath);
     Object(float *vertices, unsigned long verticesSizeInByte, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath, std::vector<GLuint> new_text);
     // destructor

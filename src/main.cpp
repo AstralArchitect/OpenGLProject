@@ -65,52 +65,7 @@ int main()
         -0.5f, -0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  4.0f
     };
 
-    float lightCubeVertices[]{
-        // positions
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-
-        -0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
-
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f,  0.5f,
-         0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f, -0.5f,
-
-        -0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f,  0.5f,
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f
-    };
-
-    Object lightCube(lightCubeVertices, sizeof(lightCubeVertices), true, false, false, "./res/shaders/light_cube/vertex.vs", "./res/shaders/light_cube/fragment.fs");
+    Object lightBulb("res/models/light_bulb.glb", "res/shaders/light_bulb/vertex.vs", "res/shaders/light_bulb/fragment.fs");
 
     std::vector<GLuint> planText = {loadTexture((char*)"res/textures/bois.jpg", true), loadTexture((char*)"res/textures/bois_specular.jpg", true)};
     Object plan(planVertices, sizeof(planVertices), true, true, true, "res/shaders/plan/plan.vs", "res/shaders/plan/plan.fs", planText);
@@ -119,7 +74,7 @@ int main()
     plan.shader->setInt("specularMap", 1);
     plan.shader->setInt("shadowMap", 2);
 
-    Object gltfObj("./res/models/untitled.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", "res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
+    Object gltfObj("./res/models/horloge.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", "res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
     // create the model texture
     gltfObj.shader->use();
     gltfObj.shader->setInt("tex", 0);
@@ -185,7 +140,7 @@ int main()
         glViewport(0, 0, shadow_info.SHADOW_WIDTH, shadow_info.SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, shadow_info.depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
-            Render::renderScene(window, plan, gltfObj, lightCube, lightSpaceMatrix);
+            Render::renderScene(window, plan, gltfObj, lightBulb, lightSpaceMatrix);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // reset viewport
@@ -194,7 +149,7 @@ int main()
 
         // 2. render scene as normal using the generated depth/shadow map  
         // --------------------------------------------------------------
-        Render::renderFrame(window, plan, gltfObj, lightCube, lightSpaceMatrix, shadow_info.depthMap);
+        Render::renderFrame(window, plan, gltfObj, lightBulb, lightSpaceMatrix, shadow_info.depthMap);
 
         GLenum err = 1;
         while (err != 0) {
