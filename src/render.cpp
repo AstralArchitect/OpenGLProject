@@ -94,7 +94,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
 
     model = glm::mat4(1.0f);
     model = glm::translate(model, lightPos);
-    model = glm::scale(model, glm::vec3(0.2f));
+    model = glm::scale(model, glm::vec3(0.075f));
     light.shader->setMat4("model", model);
         
     light.shader->setVec3("color", pointLightColor);

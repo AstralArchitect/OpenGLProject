@@ -11,7 +11,9 @@ Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool norma
     numVertices = verticesSize / sizeof(float);
     shader = new Shader(vertexPath, fragmentPath);
     depthShader = nullptr;
+    
     gltf = false;
+    depth = false;
 }
 
 Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool normals, bool texCoords, std::string vertexPath, std::string fragmentPath, std::vector<GLuint> new_texts)
@@ -23,6 +25,7 @@ Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool norma
     textures = new_texts;
 
     gltf = false;
+    depth = false;
 }
 
 Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, std::string depthVertexPath, std::string depthFragmentPath)
@@ -32,6 +35,17 @@ Object::Object(std::string modelPath, std::string vertexPath, std::string fragme
     depthShader = new Shader(depthVertexPath, depthFragmentPath);
 
     gltf = true;
+    depth = true;
+}
+
+Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath)
+{
+    model = new GltfModel((const char *)modelPath.c_str());
+    shader = new Shader(vertexPath, fragmentPath);
+    depthShader = nullptr;
+
+    gltf = true;
+    depth = false;
 }
 
 Object::~Object()
@@ -40,10 +54,14 @@ Object::~Object()
     {
         delete model;
         delete shader;
-        delete depthShader;
 
         return;
     }
+    if (depth)
+    {
+        delete depthShader;
+    }
+    
 
     textures.clear();
     

@@ -80,17 +80,15 @@ void Callback::processInput(GLFWwindow *window)
     {
         camera.ProcessKeyboard(RIGHT, deltaTime);
         camera.ProcessMouseMovement(-(deltaTime) * 500, 0);
-    }
+    }/*
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
     {
         camera.ProcessKeyboard(FORWARD, deltaTime);
-        //camera.ProcessMouseMovement(0, deltaTime * 500);
     }
     else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
     {
         camera.ProcessKeyboard(BACKWARD, deltaTime);
-        //camera.ProcessMouseMovement(0, -(deltaTime) * 500);
-    }
+    }*/
     
     if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
         if (!isFullscreen) {
