@@ -78,6 +78,7 @@ int main()
     // create the model texture
     gltfObj.shader->use();
     gltfObj.shader->setInt("tex", 0);
+    gltfObj.shader->setInt("shadowMap", 2);
 
     // uniform buffer
     // --------------

@@ -70,6 +70,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
     gltf_model.shader->setVec3("viewPos", camera.Position);
     gltf_model.shader->setVec3("lightPos", lightPos);
     gltf_model.shader->setVec3("ambientColor", backgroundColor);
+    gltf_model.shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
     gltf_model.shader->setVec3("ambientColor", backgroundColor);
 
