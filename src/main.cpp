@@ -141,7 +141,9 @@ int main()
         glViewport(0, 0, shadow_info.SHADOW_WIDTH, shadow_info.SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, shadow_info.depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
+            glCullFace(GL_FRONT);
             Render::renderScene(window, plan, gltfObj, lightBulb, lightSpaceMatrix);
+            glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // reset viewport

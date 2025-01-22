@@ -25,7 +25,7 @@ uniform vec3 lightPos;
 
 uniform vec3 ambientColor;
 
-float ShadowCalculation(vec4 fragPosLightSpace)
+float ShadowCalculation(vec4 fragPosLightSpace, float bias)
 {
     // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -40,7 +40,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
         for(float y = -2; y <= 2; y += .2)
         {
             float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
-            shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
         }
     }
     shadow /= (20.0 * 20.0);
@@ -66,7 +66,8 @@ void main() {
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 256);
     vec3 specular = spec * lightColor * texture(specularMap, fs_in.TexCoords).rgb;
     // calculate shadow
-    float shadow = ShadowCalculation(fs_in.FragPosLightSpace);
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    float shadow = ShadowCalculation(fs_in.FragPosLightSpace, bias);
     // attenuation
     float distance = length(lightPos - fs_in.FragPos);
     float attenuation = 1.0 / (lightConstant + lightLinear * distance + lightQuadratic * distance);

@@ -15,7 +15,7 @@ uniform vec3 viewPos;
 
 uniform vec3 ambientColor;
 
-float ShadowCalculation(vec4 fragPosLightSpace)
+float ShadowCalculation(vec4 fragPosLightSpace, float bias)
 {
     // perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -30,7 +30,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
         for(float y = -2; y <= 2; y += .2)
         {
             float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
-            shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
         }
     }
     shadow /= (20.0 * 20.0);
@@ -61,7 +61,8 @@ void main()
     vec3 specular = vec3(0.3) * spec; // assuming bright white light color
 
     // calculate shadow
-    float shadow = ShadowCalculation(fs_in.FragPosLightSpace);
-
+    float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    float shadow = ShadowCalculation(fs_in.FragPosLightSpace, bias);
+    
     FragColor = vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0);
 }
