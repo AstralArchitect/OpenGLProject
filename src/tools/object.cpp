@@ -9,7 +9,7 @@ Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool norma
 {
     createVAO(vertices, verticesSize, UVs, normals, texCoords);
     numVertices = verticesSize / sizeof(float);
-    shader = new Shader(vertexPath, fragmentPath);
+    shader = Shader(vertexPath, fragmentPath);
     depthShader = nullptr;
     
     gltf = false;
@@ -20,7 +20,7 @@ Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool norma
 {
     createVAO(vertices, verticesSize, UVs, normals, texCoords);
     numVertices = verticesSize / sizeof(float);
-    shader = new Shader(vertexPath, fragmentPath);
+    shader = Shader(vertexPath, fragmentPath);
     depthShader = nullptr;
     textures = new_texts;
 
@@ -31,7 +31,7 @@ Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool norma
 Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, std::string depthVertexPath, std::string depthFragmentPath)
 {
     model = new GltfModel((const char *)modelPath.c_str());
-    shader = new Shader(vertexPath, fragmentPath);
+    shader = Shader(vertexPath, fragmentPath);
     depthShader = new Shader(depthVertexPath, depthFragmentPath);
 
     gltf = true;
@@ -41,7 +41,7 @@ Object::Object(std::string modelPath, std::string vertexPath, std::string fragme
 Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath)
 {
     model = new GltfModel((const char *)modelPath.c_str());
-    shader = new Shader(vertexPath, fragmentPath);
+    shader = Shader(vertexPath, fragmentPath);
     depthShader = nullptr;
 
     gltf = true;
@@ -53,7 +53,6 @@ Object::~Object()
     if (gltf)
     {
         delete model;
-        delete shader;
 
         return;
     }
@@ -72,15 +71,15 @@ void Object::draw()
 {
     if (gltf)
     {
-        model->draw();
-        shader->unuse();
+        model->draw(shader);
+        shader.unuse();
         return;
     }
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, numVertices);
     // unbinde shader & VAO
     glBindVertexArray(0);
-    shader->unuse();
+    shader.unuse();
 }
 
 void Object::drawWithoutTexture()

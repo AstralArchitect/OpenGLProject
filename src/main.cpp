@@ -69,21 +69,21 @@ int main()
 
     std::vector<GLuint> planText = {loadTexture((char*)"res/textures/bois.jpg", true), loadTexture((char*)"res/textures/bois_specular.jpg", true)};
     Object plan(planVertices, sizeof(planVertices), true, true, true, "res/shaders/plan/plan.vs", "res/shaders/plan/plan.fs", planText);
-    plan.shader->use();
-    plan.shader->setInt("colorMap", 0);
-    plan.shader->setInt("specularMap", 1);
-    plan.shader->setInt("shadowMap", 2);
+    plan.shader.use();
+    plan.shader.setInt("colorMap", 0);
+    plan.shader.setInt("specularMap", 1);
+    plan.shader.setInt("shadowMap", 2);
 
     Object gltfObj("./res/models/horloge.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", "res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
     // create the model texture
-    gltfObj.shader->use();
-    gltfObj.shader->setInt("tex", 0);
-    gltfObj.shader->setInt("shadowMap", 2);
+    gltfObj.shader.use();
+    gltfObj.shader.setInt("tex", 0);
+    gltfObj.shader.setInt("shadowMap", 2);
 
     // uniform buffer
     // --------------
-    unsigned int light_index = glGetUniformBlockIndex(plan.shader->ID, "Light");
-    glUniformBlockBinding(plan.shader->ID, light_index, 0);
+    unsigned int light_index = glGetUniformBlockIndex(plan.shader.ID, "Light");
+    glUniformBlockBinding(plan.shader.ID, light_index, 0);
 
     unsigned int uboLight;
     glGenBuffers(1, &uboLight);

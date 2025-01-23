@@ -1,26 +1,30 @@
-#ifndef GLTF_H
-#define GLTF_H
+#ifndef GLTF_LOADER_H
+#define GLTF_LOADER_H
 
 #include <optional>
 
 #include <tiny_gltf.h>
 #include <glad/glad.h>
+#include <tools/shader.hpp>
 
 class GltfMaterial {
     public:
         GltfMaterial(tinygltf::Model &root, tinygltf::Material mat);
         GltfMaterial() {};
-        void activate() const;
+        void activate(Shader &shader) const;
 
     private:
-        GLuint basecolor_gputex;
-        GLuint metallic_roughness_gputex;
+        std::optional<GLuint> basecolor_gputex;
+        std::optional<GLuint> metallic_roughness_gputex;
+        double basecolor[3];
+        double metallic_factor;
+        double roughness_factor;
 };
 
 class GltfPrimitive {
     public:
         GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &prim);
-        void draw() const;
+        void draw(Shader &shader) const;
         void drawWithoutTextures() const;
     
     private:
@@ -33,7 +37,7 @@ class GltfPrimitive {
 class GltfMesh {
     public:
         GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh);
-        void draw();
+        void draw(Shader &shader);
         void drawWithoutTextures();
 
     private:
@@ -43,7 +47,7 @@ class GltfMesh {
 class GltfNode {
     public:
         GltfNode(tinygltf::Model &root, tinygltf::Node node);
-        void draw();
+        void draw(Shader &shader);
         void drawWithoutTextures();
 
     private:
@@ -55,7 +59,7 @@ class GltfModel {
     public:
         GltfModel(const char* filename);
         // TODO: créer un destructeur pour cette class
-        void draw();
+        void draw(Shader &shader);
         void drawWithoutTextures();
 
     private:

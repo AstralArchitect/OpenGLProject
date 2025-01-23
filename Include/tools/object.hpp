@@ -24,7 +24,7 @@ private:
     void createVAO(float *vertices, unsigned long verticesSize, bool UVs, bool normals, bool texCoords);
 public:
     // shader
-    Shader *shader;
+    Shader shader;
     Shader *depthShader;
 
     // constructors

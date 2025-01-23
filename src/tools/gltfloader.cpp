@@ -1,9 +1,11 @@
 #include <tools/gltfloader.hpp>
+#include <tools/shader.hpp>
 
 #include <cstdio>
 #include <iostream>
 #include <algorithm>
 
+#include <glm/glm.hpp>
 #include <glad/glad.h>
 #include <callbacks.hpp>
 
@@ -37,9 +39,9 @@ GltfModel::GltfModel(const char* filename) {
     }
 }
 
-void GltfModel::draw() {
+void GltfModel::draw(Shader &shader) {
     for (GltfNode &child: this->children) {
-        child.draw();
+        child.draw(shader);
     }
 }
 
@@ -61,13 +63,13 @@ GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node) {
     }
 }
 
-void GltfNode::draw() {
+void GltfNode::draw(Shader &shader) {
     for (GltfNode &child: this->children) {
-        child.draw();
+        child.draw(shader);
     }
 
     if (this->mesh.has_value()) {
-        this->mesh.value().draw();
+        this->mesh.value().draw(shader);
     }
 }
 
@@ -100,9 +102,9 @@ void print_tuple(const std::tuple<T...> &tuple_to_print) {
     print_tuple_util(tuple_to_print, std::make_index_sequence<sizeof...(T)>());
 }
 
-void GltfMesh::draw() {
+void GltfMesh::draw(Shader &shader) {
     for (const auto &prim: this->primitives) {
-        prim.draw();
+        prim.draw(shader);
     }
 }
 
@@ -154,21 +156,40 @@ GLuint load_texture_to_gpu(tinygltf::Model &root, tinygltf::TextureInfo texinfo)
 }
 
 GltfMaterial::GltfMaterial(tinygltf::Model &root, tinygltf::Material material) {
+    std::copy(material.pbrMetallicRoughness.baseColorFactor.cbegin(), material.pbrMetallicRoughness.baseColorFactor.cbegin() + 3, basecolor);
+    metallic_factor = material.pbrMetallicRoughness.metallicFactor;
+    roughness_factor = material.pbrMetallicRoughness.roughnessFactor;
+
     tinygltf::TextureInfo basecolor_texinfo = material.pbrMetallicRoughness.baseColorTexture;
     tinygltf::TextureInfo metallic_roughness_texinfo = material.pbrMetallicRoughness.metallicRoughnessTexture;
 
     printf("Loading textures...\n");
-    basecolor_gputex = load_texture_to_gpu(root, basecolor_texinfo);
-    metallic_roughness_gputex = load_texture_to_gpu(root, metallic_roughness_texinfo);
+    basecolor_gputex = (basecolor_texinfo.index >= 0) ?
+        std::optional(load_texture_to_gpu(root, basecolor_texinfo)) :
+        std::nullopt;
+
+    metallic_roughness_gputex = (metallic_roughness_texinfo.index >= 0) ?
+        std::optional(load_texture_to_gpu(root, metallic_roughness_texinfo)) :
+        std::nullopt;
 
     printf("Textures loaded !\n");
 }
 
-void GltfMaterial::activate() const {
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, basecolor_gputex);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, metallic_roughness_gputex);
+void GltfMaterial::activate(Shader &shader) const {
+    if (basecolor_gputex.has_value()) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, basecolor_gputex.value());
+    } else {
+        shader.setVec3("base_color", glm::vec3(basecolor[0], basecolor[1], basecolor[2]));
+    }
+
+    if (metallic_roughness_gputex.has_value()) {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, metallic_roughness_gputex.value());
+    } else {
+        shader.setFloat("metallic_factor", metallic_factor);
+        shader.setFloat("roughness_factor", roughness_factor);
+    }
 }
 
 GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &prim) {
@@ -290,10 +311,10 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     vertex_count = indices_accessor.count;
 }
 
-void GltfPrimitive::draw() const {
+void GltfPrimitive::draw(Shader &shader) const {
     glBindVertexArray(vao);
 
-    material.activate();
+    material.activate(shader);
 
     glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, (void*)0);
     glBindVertexArray(0);
