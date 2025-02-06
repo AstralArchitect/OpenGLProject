@@ -1,19 +1,19 @@
 project('OpenGL', 'c', 'cpp', version : 'pre-release', default_options: ['cpp_std=c++20'])
 
-cppDir = 'src/'
+cpp_dir = 'src/'
 
-personnalCppLibs = cppDir + 'libs/'
+personnal_cpp_libs = cpp_dir + 'libs/'
 
-toolsDir = cppDir + 'tools/'
+tools_dir = cpp_dir + 'tools/'
 
-OpenGL_lib = cppDir + 'OpenGL_libs/'
+opengl_lib = cpp_dir + 'OpenGL_libs/'
 
-cppSources = [cppDir + 'main.cpp', cppDir + 'render.cpp']
-OpenGlLibsSources = [OpenGL_lib + 'glad.c']
-personnal_cpp_sources = [cppDir + 'callbacks.cpp']
-toolsSources = [toolsDir + 'camera.cpp', toolsDir + 'shader.cpp', toolsDir + 'gltfloader.cpp', toolsDir + 'object.cpp']
+cpp_sources = [cpp_dir + 'main.cpp', cpp_dir + 'render.cpp']
+opengl_libs_sources = [opengl_lib + 'glad.c']
+personnal_cpp_sources = [cpp_dir + 'callbacks.cpp']
+tools_sources = [tools_dir + 'camera.cpp', tools_dir + 'shader.cpp', tools_dir + 'gltfloader.cpp', tools_dir + 'object.cpp']
 
-sources = [cppSources, OpenGlLibsSources, personnal_cpp_sources, toolsSources]
+sources = [cpp_sources, opengl_libs_sources, personnal_cpp_sources, tools_sources]
 include_dir = include_directories('Include')
 glfw_dep = dependency('glfw3')
 glm_dep = dependency('glm')
