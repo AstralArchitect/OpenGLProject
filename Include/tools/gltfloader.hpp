@@ -19,6 +19,7 @@ class GltfMaterial {
         double basecolor[3];
         double metallic_factor;
         double roughness_factor;
+        Shader mat_shader;
 };
 
 class GltfPrimitive {

@@ -8,6 +8,8 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <filesystem>
+#include <unordered_map>
 
 class Shader
 {
@@ -21,10 +23,10 @@ public:
     // constructeur avec spé du dossier (strings moins long)
     Shader(std::string const& folder, std::string vertexName, std::string fragmentName);
 
+    Shader(unsigned char, std::filesystem::path);
+
     // Ouais ptit constructeur avec la syntax dégueulasse du C++ toi même tu sais
     Shader(): ID(0) {};
-
-    static Shader fromStr(const char* vertexShader, const char* fragmentShader);
 
     void paths(const char* vertexPath, const char* fragmentPath);
 
@@ -54,11 +56,15 @@ public:
     void setMat3(const std::string &name, const glm::mat3 &mat) const;
     // ------------------------------------------------------------------------
     void setMat4(const std::string &name, const glm::mat4 &mat) const;
+};
 
-private:
-    // utility function for checking shader compilation/linking errors.
-    // ------------------------------------------------------------------------
-    static void checkCompileErrors(GLuint shader, std::string type);
+class ShaderStore {
+    public:
+        const Shader& get_shader(unsigned char flags);
+
+    private:
+        std::unordered_map<unsigned char, Shader> loaded_shaders;
+        std::filesystem::path shaders_dir;
 };
 
 #endif
