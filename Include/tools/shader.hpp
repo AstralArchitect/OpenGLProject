@@ -5,11 +5,9 @@
 #include <glm/glm.hpp>
 
 #include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
 #include <filesystem>
 #include <unordered_map>
+#include <bitset>
 
 class Shader
 {
@@ -21,9 +19,9 @@ public:
     // ------------------------------------------------------------------------
     Shader(std::string const& vertexPath, std::string const& fragmentPath);
     // constructeur avec spé du dossier (strings moins long)
-    Shader(std::string const& folder, std::string vertexName, std::string fragmentName);
+    Shader(std::string const& folder, std::string const& vertexName, std::string const& fragmentName);
 
-    Shader(unsigned char, std::filesystem::path);
+    Shader(std::bitset<3>, std::filesystem::path);
 
     // Ouais ptit constructeur avec la syntax dégueulasse du C++ toi même tu sais
     Shader(): ID(0) {};
@@ -58,12 +56,16 @@ public:
     void setMat4(const std::string &name, const glm::mat4 &mat) const;
 };
 
+const std::bitset<3> HAS_NORMALS = 1;
+const std::bitset<3> HAS_BASE_COLOR_TEX = 1 << 1;
+const std::bitset<3> HAS_PBR_TEX = 1 << 2;
+
 class ShaderStore {
     public:
-        const Shader& get_shader(unsigned char flags);
+        const Shader& get_shader(std::bitset<3> flags);
 
     private:
-        std::unordered_map<unsigned char, Shader> loaded_shaders;
+        std::unordered_map<std::bitset<3>, Shader> loaded_shaders;
         std::filesystem::path shaders_dir;
 };
 

@@ -34,51 +34,46 @@ void checkCompileErrors(GLuint shader, std::string type)
     }
 }
 
-unsigned int load_shader_from_files(std::filesystem::path vertex_path, std::filesystem::path fragment_path) {
-    std::string vertexCode;
-    std::string fragmentCode;
-    std::ifstream vShaderFile;
-    std::ifstream fShaderFile;
-    // ensure ifstream objects can throw exceptions:
-    vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-    fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+std::string load_shader_file(std::filesystem::path shader_path) {
+    std::ifstream shader_file;
+    shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+    std::string shader_code;
     try {
-        // open files
-        vShaderFile.open(vertex_path);
-        fShaderFile.open(fragment_path);
-        std::stringstream vShaderStream, fShaderStream;
-        // read file's buffer contents into streams
-        vShaderStream << vShaderFile.rdbuf();
-        fShaderStream << fShaderFile.rdbuf();		
-        // close file handlers
-        vShaderFile.close();
-        fShaderFile.close();
-        // convert stream into string
-        vertexCode = vShaderStream.str();
-        fragmentCode = fShaderStream.str();			
+        shader_file.open(shader_path);
+        std::stringstream shader_stream;
+        shader_stream << shader_file.rdbuf();
+        shader_file.close();
+
+        shader_code = shader_stream.str();
     } catch (std::ifstream::failure& e) {
-        std::cout << "ERROR::SHADER::FILE_" << vertex_path << "_" << fragment_path << "_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
+        std::cout << "[Shader Loader] Error when loading shader (" << shader_path << "): " << e.what() << std::endl;
     }
-    const char* vShaderCode = vertexCode.c_str();
-    const char * fShaderCode = fragmentCode.c_str();
-    // 2. compile shaders
+
+    return shader_code;
+}
+
+unsigned char compile_shader_code(const char* vertex_shader_code, const char* fragment_shader_code) {
     unsigned int vertex, fragment;
     // vertex shader
     vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, &vShaderCode, NULL);
+    glShaderSource(vertex, 1, &vertex_shader_code, NULL);
     glCompileShader(vertex);
     checkCompileErrors(vertex, "VERTEX");
+
     // fragment Shader
     fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, &fShaderCode, NULL);
+    glShaderSource(fragment, 1, &fragment_shader_code, NULL);
     glCompileShader(fragment);
     checkCompileErrors(fragment, "FRAGMENT");
+
     // shader Program
     unsigned int ID = glCreateProgram();
     glAttachShader(ID, vertex);
     glAttachShader(ID, fragment);
     glLinkProgram(ID);
     checkCompileErrors(ID, "PROGRAM");
+
     // delete the shaders as they're linked into our program now and no longer necessary
     glDeleteShader(vertex);
     glDeleteShader(fragment);
@@ -89,18 +84,40 @@ unsigned int load_shader_from_files(std::filesystem::path vertex_path, std::file
 // constructor generates the shader on the fly
 // ------------------------------------------------------------------------
 Shader::Shader(std::string const& vertex_path, std::string const& fragment_path) {
-    ID = load_shader_from_files(std::filesystem::path(vertex_path), std::filesystem::path(fragment_path));
+    std::string vertex_shader_code = load_shader_file(std::filesystem::path(vertex_path));
+    std::string fragment_shader_code = load_shader_file(std::filesystem::path(fragment_path));
+
+    ID = compile_shader_code(vertex_shader_code.c_str(), fragment_shader_code.c_str());
 }
 
-Shader::Shader(std::string const& folder, std::string vertex_path, std::string fragment_path) {
-    vertex_path = folder + vertex_path;
-    fragment_path = folder + fragment_path;
+Shader::Shader(std::string const& folder, std::string const& vertex_path, std::string const& fragment_path) {
+    std::string vertex_path2 = folder + vertex_path;
+    std::string fragment_path2 = folder + fragment_path;
     
-    ID = load_shader_from_files(std::filesystem::path(vertex_path), std::filesystem::path(fragment_path));
+    std::string vertex_shader_code = load_shader_file(std::filesystem::path(vertex_path2));
+    std::string fragment_shader_code = load_shader_file(std::filesystem::path(fragment_path2));
+
+    ID = compile_shader_code(vertex_shader_code.c_str(), fragment_shader_code.c_str());
 }
 
-Shader::Shader(unsigned char flags, std::filesystem::path shaders_folder) {
-    
+Shader::Shader(std::bitset<3> flags, std::filesystem::path shaders_folder) {
+    std::string vertex_code = load_shader_file(shaders_folder / "pbr.vs");
+    std::string fragment_code = load_shader_file(shaders_folder / "pbr.fs");
+
+    if (flags.test(0)) {
+        vertex_code.insert(0, "#define HAS_NORMALS\n");
+        fragment_code.insert(0, "#define HAS_NORMALS\n");
+    }
+    if (flags.test(1)) {
+        vertex_code.insert(0, "#define HAS_BASE_COLOR_TEX\n");
+        fragment_code.insert(0, "#define HAS_BASE_COLOR_TEX\n");
+    }
+    if (flags.test(2)) {
+        vertex_code.insert(0, "#define HAS_PBR_TEX\n");
+        fragment_code.insert(0, "#define HAS_PBR_TEX\n");
+    }
+
+    ID = compile_shader_code(vertex_code.c_str(), fragment_code.c_str());
 }
 
 // activate the shader
@@ -173,10 +190,13 @@ void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
 
-/*const Shader& ShaderStore::get_shader(unsigned char flags) {
+const Shader& ShaderStore::get_shader(std::bitset<3> flags) {
     if (loaded_shaders.contains(flags)) {
         return loaded_shaders[flags];
     } else {
-        Shader
+        Shader new_shader = Shader(flags, shaders_dir);
+        loaded_shaders[flags] = new_shader;
+
+        return loaded_shaders[flags];
     }
-}*/
+}
