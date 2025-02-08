@@ -6,6 +6,7 @@
 #include <callbacks.hpp>
 
 #include <stb_image.h>
+#include <iostream>
 
 extern Camera camera;
 

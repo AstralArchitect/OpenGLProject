@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <map>
 
 // utility function for checking shader compilation/linking errors.
 // ------------------------------------------------------------------------
@@ -191,7 +192,7 @@ void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const
 }
 
 const Shader& ShaderStore::get_shader(std::bitset<3> flags) {
-    if (loaded_shaders.contains(flags)) {
+    if (loaded_shaders.find(flags) != loaded_shaders.end()) {
         return loaded_shaders[flags];
     } else {
         Shader new_shader = Shader(flags, shaders_dir);
