@@ -62,7 +62,8 @@ const std::bitset<3> HAS_PBR_TEX = 1 << 2;
 
 class ShaderStore {
     public:
-        const Shader& get_shader(std::bitset<3> flags);
+        Shader& get_shader(std::bitset<3> flags);
+        ShaderStore(std::filesystem::path path): shaders_dir(path) {}
 
     private:
         std::unordered_map<std::bitset<3>, Shader> loaded_shaders;

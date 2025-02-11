@@ -12,13 +12,10 @@
 #define btogl(x) x ? GL_TRUE : GL_FALSE
 #define tget(x, y) std::get<x>(y)
 
-GltfModel::GltfModel(const char* filename) {
+GltfModel::GltfModel(const char* filename, ShaderStore& shader_store) {
     tinygltf::TinyGLTF loader;
     std::string err;
     std::string warn;
-
-    //tinygltf::Model tiny_model;
-    //std::vector<GltfNode> children;
 
     bool res = loader.LoadBinaryFromFile(&tiny_model, &err, &warn, filename);
     if (!warn.empty()) {
@@ -35,13 +32,19 @@ GltfModel::GltfModel(const char* filename) {
     const tinygltf::Scene &scene = tiny_model.scenes[tiny_model.defaultScene];
     for (size_t i = 0; i < scene.nodes.size(); ++i) {
         assert((scene.nodes[i] >= 0) && ((unsigned long)scene.nodes[i] < tiny_model.nodes.size()));
-        children.push_back(GltfNode(tiny_model, tiny_model.nodes[scene.nodes[i]]));
+        children.push_back(GltfNode(tiny_model, tiny_model.nodes[scene.nodes[i]], shader_store));
     }
 }
 
-void GltfModel::draw(Shader &shader) {
+void GltfModel::draw() {
     for (GltfNode &child: this->children) {
-        child.draw(shader);
+        child.draw();
+    }
+}
+
+void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    for (auto& child: children) {
+        child.set_node_uniforms(uniforms_fn);
     }
 }
 
@@ -51,41 +54,51 @@ void GltfModel::drawWithoutTextures() {
     }
 }
 
-GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node) {
+GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node, ShaderStore& shader_store) {
     mesh = ((node.mesh >= 0) && ((unsigned long)node.mesh < root.meshes.size())) ?
-        std::optional(GltfMesh(root, root.meshes[node.mesh])) :
+        std::optional(GltfMesh(root, root.meshes[node.mesh], shader_store)) :
         std::nullopt;
 
 
     for (size_t i = 0; i < node.children.size(); i++) {
         assert((node.children[i] >= 0) && ((unsigned long)node.children[i] < root.nodes.size()));
-        children.push_back(GltfNode(root, root.nodes[node.children[i]]));
+        children.push_back(GltfNode(root, root.nodes[node.children[i]], shader_store));
     }
 }
 
-void GltfNode::draw(Shader &shader) {
+void GltfNode::draw() {
     for (GltfNode &child: this->children) {
-        child.draw(shader);
+        child.draw();
     }
 
     if (this->mesh.has_value()) {
-        this->mesh.value().draw(shader);
+        this->mesh.value().draw();
+    }
+}
+
+void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    for (GltfNode &child: this->children) {
+        child.set_node_uniforms(uniforms_fn);
+    }
+
+    if (this->mesh.has_value()) {
+        this->mesh.value().set_mesh_uniforms(uniforms_fn);
     }
 }
 
 void GltfNode::drawWithoutTextures() {
-    for (GltfNode &child: this->children) {
+    for (auto& child: children) {
         child.drawWithoutTextures();
     }
 
-    if (this->mesh.has_value()) {
-        this->mesh.value().drawWithoutTextures();
+    if (mesh.has_value()) {
+        mesh.value().drawWithoutTextures();
     }
 }
 
-GltfMesh::GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh) {
+GltfMesh::GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh, ShaderStore& shader_store) {
     for (const tinygltf::Primitive &prim : mesh.primitives) {
-        primitives.push_back(GltfPrimitive(root, prim));
+        primitives.push_back(GltfPrimitive(root, prim, shader_store));
     }
 }
 
@@ -102,9 +115,15 @@ void print_tuple(const std::tuple<T...> &tuple_to_print) {
     print_tuple_util(tuple_to_print, std::make_index_sequence<sizeof...(T)>());
 }
 
-void GltfMesh::draw(Shader &shader) {
+void GltfMesh::draw() {
     for (const auto &prim: this->primitives) {
-        prim.draw(shader);
+        prim.draw();
+    }
+}
+
+void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    for (auto& prim: primitives) {
+        prim.set_primitive_uniforms(uniforms_fn);
     }
 }
 
@@ -155,7 +174,7 @@ GLuint load_texture_to_gpu(tinygltf::Model &root, tinygltf::TextureInfo texinfo)
     return gputex;
 }
 
-GltfMaterial::GltfMaterial(tinygltf::Model &root, tinygltf::Material material) {
+GltfMaterial::GltfMaterial(tinygltf::Model &root, tinygltf::Material material, ShaderStore& shader_store, bool has_normals) {
     std::copy(material.pbrMetallicRoughness.baseColorFactor.cbegin(), material.pbrMetallicRoughness.baseColorFactor.cbegin() + 3, basecolor);
     metallic_factor = material.pbrMetallicRoughness.metallicFactor;
     roughness_factor = material.pbrMetallicRoughness.roughnessFactor;
@@ -163,38 +182,59 @@ GltfMaterial::GltfMaterial(tinygltf::Model &root, tinygltf::Material material) {
     tinygltf::TextureInfo basecolor_texinfo = material.pbrMetallicRoughness.baseColorTexture;
     tinygltf::TextureInfo metallic_roughness_texinfo = material.pbrMetallicRoughness.metallicRoughnessTexture;
 
-    printf("Loading textures...\n");
-    basecolor_gputex = (basecolor_texinfo.index >= 0) ?
-        std::optional(load_texture_to_gpu(root, basecolor_texinfo)) :
-        std::nullopt;
+    std::bitset<3> shader_features;
 
-    metallic_roughness_gputex = (metallic_roughness_texinfo.index >= 0) ?
-        std::optional(load_texture_to_gpu(root, metallic_roughness_texinfo)) :
-        std::nullopt;
+    printf("Loading textures...\n");
+    if (basecolor_texinfo.index >= 0) {
+        basecolor_gputex = std::optional(load_texture_to_gpu(root, basecolor_texinfo));
+
+        shader_features.set(1);
+    } else {
+        basecolor_gputex = std::nullopt;
+    }
+
+    if (metallic_roughness_texinfo.index >= 0) {
+        metallic_roughness_gputex = std::optional(load_texture_to_gpu(root, metallic_roughness_texinfo));
+
+        shader_features.set(2);
+    } else {
+        metallic_roughness_gputex = std::nullopt;
+    }
+
+    if (has_normals) {
+        shader_features.set(0);
+    }
+
+    mat_shader = &shader_store.get_shader(shader_features);
 
     printf("Textures loaded !\n");
 }
 
-void GltfMaterial::activate(Shader &shader) const {
+void GltfMaterial::activate() const {
+    mat_shader->use();
+
     if (basecolor_gputex.has_value()) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, basecolor_gputex.value());
     } else {
-        shader.setVec3("base_color", glm::vec3(basecolor[0], basecolor[1], basecolor[2]));
+        mat_shader->setVec3("base_color", glm::vec3(basecolor[0], basecolor[1], basecolor[2]));
     }
 
     if (metallic_roughness_gputex.has_value()) {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, metallic_roughness_gputex.value());
     } else {
-        shader.setFloat("metallic_factor", metallic_factor);
-        shader.setFloat("roughness_factor", roughness_factor);
+        mat_shader->setFloat("metallic_factor", metallic_factor);
+        mat_shader->setFloat("roughness_factor", roughness_factor);
     }
 }
 
-GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &prim) {
+void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    uniforms_fn(mat_shader);
+}
+
+GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &prim, ShaderStore& shader_store) {
     glGenVertexArrays(1, &vao);
-    //printf("VAO num: %lu\n", vao);
     glBindVertexArray(vao);
 
     typedef struct {
@@ -211,6 +251,8 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     int stride = 3;
+
+    bool has_normals = false;
 
     for (const auto &attr : prim.attributes) {
         assert((attr.second >= 0) && ((unsigned long)attr.second < root.accessors.size()));
@@ -230,6 +272,7 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
             normal_buf = std::optional(BufferInfos { accessor, buffer_view, buffer });
             stride += 3;
             printf("model has normals\n");
+            has_normals = true;
         } else if (attr.first.compare("TEXCOORD_0") == 0) {
             texcoord_buf = std::optional(BufferInfos { accessor, buffer_view, buffer });
             stride += 2;
@@ -305,19 +348,23 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     assert((prim.material >= 0) && ((unsigned long)prim.material < root.materials.size()));
     tinygltf::Material mat = root.materials[prim.material];
 
-    material = GltfMaterial(root, mat);
+    material = GltfMaterial(root, mat, shader_store, has_normals);
 
     draw_mode = prim.mode;
     vertex_count = indices_accessor.count;
 }
 
-void GltfPrimitive::draw(Shader &shader) const {
+void GltfPrimitive::draw() const {
     glBindVertexArray(vao);
 
-    material.activate(shader);
+    material.activate();
 
     glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, (void*)0);
     glBindVertexArray(0);
+}
+
+void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    material.set_material_uniforms(uniforms_fn);
 }
 
 void GltfPrimitive::drawWithoutTextures() const {
