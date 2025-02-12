@@ -30,7 +30,7 @@ Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool norma
 
 Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, std::string depthVertexPath, std::string depthFragmentPath)
 {
-    model = new GltfModel((const char *)modelPath.c_str());
+    //model = new GltfModel((const char *)modelPath.c_str());
     shader = Shader(vertexPath, fragmentPath);
     depthShader = new Shader(depthVertexPath, depthFragmentPath);
 
@@ -40,7 +40,7 @@ Object::Object(std::string modelPath, std::string vertexPath, std::string fragme
 
 Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath)
 {
-    model = new GltfModel((const char *)modelPath.c_str());
+    //model = new GltfModel((const char *)modelPath.c_str());
     shader = Shader(vertexPath, fragmentPath);
     depthShader = nullptr;
 
@@ -71,7 +71,7 @@ void Object::draw()
 {
     if (gltf)
     {
-        model->draw(shader);
+        model->draw();
         shader.unuse();
         return;
     }

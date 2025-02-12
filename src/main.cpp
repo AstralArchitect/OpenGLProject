@@ -74,11 +74,15 @@ int main()
     plan.shader.setInt("specularMap", 1);
     plan.shader.setInt("shadowMap", 2);
 
-    Object gltfObj("./res/models/horloge.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", "res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
+    ShaderStore shader_store("./res/shaders/pbr");
+
+    GltfModel gltfobj("./res/models/horloge.glb", shader_store);
+
+    /*Object gltfObj("./res/models/horloge.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", "res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
     // create the model texture
     gltfObj.shader.use();
     gltfObj.shader.setInt("tex", 0);
-    gltfObj.shader.setInt("shadowMap", 2);
+    gltfObj.shader.setInt("shadowMap", 2);*/
 
     // uniform buffer
     // --------------
@@ -142,7 +146,7 @@ int main()
         glBindFramebuffer(GL_FRAMEBUFFER, shadow_info.depthMapFBO);
             glClear(GL_DEPTH_BUFFER_BIT);
             glCullFace(GL_FRONT);
-            Render::renderScene(window, plan, gltfObj, lightBulb, lightSpaceMatrix);
+            Render::renderScene(window, plan, gltfobj, lightBulb, lightSpaceMatrix);
             glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -152,7 +156,7 @@ int main()
 
         // 2. render scene as normal using the generated depth/shadow map  
         // --------------------------------------------------------------
-        Render::renderFrame(window, plan, gltfObj, lightBulb, lightSpaceMatrix, shadow_info.depthMap);
+        Render::renderFrame(window, plan, gltfobj, lightBulb, lightSpaceMatrix, shadow_info.depthMap);
 
         GLenum err = 1;
         while (err != 0) {

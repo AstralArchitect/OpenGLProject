@@ -105,18 +105,27 @@ Shader::Shader(std::bitset<3> flags, std::filesystem::path shaders_folder) {
     std::string vertex_code = load_shader_file(shaders_folder / "pbr.vs");
     std::string fragment_code = load_shader_file(shaders_folder / "pbr.fs");
 
+    size_t vertex_version_idx = vertex_code.find("#version");
+    size_t vertex_end_version_idx = vertex_code.find("\n", vertex_version_idx) + 1;
+
+    size_t fragment_version_idx = fragment_code.find("#version");
+    size_t fragment_end_version_idx = fragment_code.find("\n", fragment_version_idx) + 1;
+
     if (flags.test(0)) {
-        vertex_code.insert(0, "#define HAS_NORMALS\n");
-        fragment_code.insert(0, "#define HAS_NORMALS\n");
+        vertex_code.insert(vertex_end_version_idx, "#define HAS_NORMALS\n");
+        fragment_code.insert(fragment_end_version_idx, "#define HAS_NORMALS\n");
     }
     if (flags.test(1)) {
-        vertex_code.insert(0, "#define HAS_BASE_COLOR_TEX\n");
-        fragment_code.insert(0, "#define HAS_BASE_COLOR_TEX\n");
+        vertex_code.insert(vertex_end_version_idx, "#define HAS_BASE_COLOR_TEX\n");
+        fragment_code.insert(fragment_end_version_idx, "#define HAS_BASE_COLOR_TEX\n");
     }
     if (flags.test(2)) {
-        vertex_code.insert(0, "#define HAS_PBR_TEX\n");
-        fragment_code.insert(0, "#define HAS_PBR_TEX\n");
+        vertex_code.insert(vertex_end_version_idx, "#define HAS_PBR_TEX\n");
+        fragment_code.insert(fragment_end_version_idx, "#define HAS_PBR_TEX\n");
     }
+
+    std::cout << "Vertex code:" << std::endl << vertex_code << std::endl;
+    std::cout << "Fragment code:" << std::endl << fragment_code << std::endl;
 
     ID = compile_shader_code(vertex_code.c_str(), fragment_code.c_str());
 }
@@ -191,8 +200,8 @@ void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
 
-const Shader& ShaderStore::get_shader(std::bitset<3> flags) {
-    if (loaded_shaders.find(flags) != loaded_shaders.end()) {
+Shader& ShaderStore::get_shader(std::bitset<3> flags) {
+    if (loaded_shaders.contains(flags)) {
         return loaded_shaders[flags];
     } else {
         Shader new_shader = Shader(flags, shaders_dir);
