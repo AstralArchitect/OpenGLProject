@@ -33,7 +33,7 @@ GltfModel::GltfModel(const std::string& filename, ShaderStore& shader_store) {
 
     const tinygltf::Scene& scene = tiny_model.scenes[tiny_model.defaultScene];
     for (size_t i = 0; i < scene.nodes.size(); ++i) {
-        assert((scene.nodes[i] >= 0) && ((unsigned long)scene.nodes[i] < tiny_model.nodes.size()));
+        assert((scene.nodes[i] >= 0) && (static_cast<size_t>(scene.nodes[i]) < tiny_model.nodes.size()));
         children.push_back(GltfNode(tiny_model, tiny_model.nodes[scene.nodes[i]], shader_store, mat4(1.0)));
     }
 }
@@ -56,7 +56,7 @@ void GltfModel::drawWithoutTextures() {
     }
 }
 
-GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node, ShaderStore& shader_store, mat4 parent_node_transform) {
+GltfNode::GltfNode(tinygltf::Model& root, tinygltf::Node node, ShaderStore& shader_store, mat4 parent_node_transform) {
     if (node.translation.size() == 3) {
         vec3 translation(node.translation[0], node.translation[1], node.translation[2]);
 
@@ -78,13 +78,13 @@ GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node, ShaderStore& shad
 
     node_transform = parent_node_transform * node_transform;
     
-    mesh = ((node.mesh >= 0) && ((unsigned long)node.mesh < root.meshes.size())) ?
+    mesh = ((node.mesh >= 0) && (static_cast<size_t>(node.mesh) < root.meshes.size())) ?
         std::optional(GltfMesh(root, root.meshes[node.mesh], shader_store)) :
         std::nullopt;
 
 
     for (size_t i = 0; i < node.children.size(); i++) {
-        assert((node.children[i] >= 0) && ((unsigned long)node.children[i] < root.nodes.size()));
+        assert((node.children[i] >= 0) && (static_cast<size_t>(node.children[i]) < root.nodes.size()));
         children.push_back(GltfNode(root, root.nodes[node.children[i]], shader_store, node_transform));
     }
 }
@@ -100,7 +100,7 @@ void GltfNode::draw() const {
 }
 
 void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn) {
-    for (GltfNode &child: this->children) {
+    for (auto& child: children) {
         child.set_node_uniforms(uniforms_fn);
     }
 
@@ -119,8 +119,8 @@ void GltfNode::drawWithoutTextures() {
     }
 }
 
-GltfMesh::GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh, ShaderStore& shader_store) {
-    for (const tinygltf::Primitive &prim : mesh.primitives) {
+GltfMesh::GltfMesh(tinygltf::Model& root, tinygltf::Mesh mesh, ShaderStore& shader_store) {
+    for (const auto& prim : mesh.primitives) {
         primitives.push_back(GltfPrimitive(root, prim, shader_store));
     }
 }
@@ -156,14 +156,14 @@ void GltfMesh::drawWithoutTextures() {
     }
 }
 
-GLuint load_texture_to_gpu(tinygltf::Model &root, tinygltf::TextureInfo texinfo) {
-    assert((texinfo.index >= 0) && ((unsigned long)texinfo.index < root.textures.size()));
+GLuint load_texture_to_gpu(tinygltf::Model& root, tinygltf::TextureInfo texinfo) {
+    assert((texinfo.index >= 0) && (static_cast<size_t>(texinfo.index) < root.textures.size()));
     tinygltf::Texture gltftex = root.textures[texinfo.index];
 
-    assert((gltftex.source >= 0) && ((unsigned long)gltftex.source < root.images.size()));
+    assert((gltftex.source >= 0) && (static_cast<size_t>(gltftex.source) < root.images.size()));
     tinygltf::Image image = root.images[gltftex.source];
 
-    assert((gltftex.sampler >= 0) && ((unsigned long)gltftex.sampler < root.textures.size()));
+    assert((gltftex.sampler >= 0) && (static_cast<size_t>(gltftex.sampler) < root.textures.size()));
     tinygltf::Sampler sampler = root.samplers[gltftex.sampler];
 
     GLenum tex_components/*, tex_bits*/;
@@ -197,7 +197,7 @@ GLuint load_texture_to_gpu(tinygltf::Model &root, tinygltf::TextureInfo texinfo)
     return gputex;
 }
 
-GltfMaterial::GltfMaterial(tinygltf::Model &root, tinygltf::Material material, ShaderStore& shader_store, bool has_normals) {
+GltfMaterial::GltfMaterial(tinygltf::Model& root, tinygltf::Material material, ShaderStore& shader_store, bool has_normals) {
     std::copy(material.pbrMetallicRoughness.baseColorFactor.cbegin(), material.pbrMetallicRoughness.baseColorFactor.cbegin() + 3, basecolor);
     metallic_factor = material.pbrMetallicRoughness.metallicFactor;
     roughness_factor = material.pbrMetallicRoughness.roughnessFactor;
@@ -257,7 +257,7 @@ void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_f
     uniforms_fn(mat_shader);
 }
 
-GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &prim, ShaderStore& shader_store) {
+GltfPrimitive::GltfPrimitive(tinygltf::Model& root, const tinygltf::Primitive& prim, ShaderStore& shader_store) {
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
@@ -279,14 +279,14 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     bool has_normals = false;
 
     for (const auto &attr : prim.attributes) {
-        assert((attr.second >= 0) && ((unsigned long)attr.second < root.accessors.size()));
+        assert((attr.second >= 0) && (static_cast<size_t>(attr.second) < root.accessors.size()));
         tinygltf::Accessor accessor = root.accessors[attr.second];
         assert(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
 
-        assert((accessor.bufferView >= 0) && ((unsigned long)accessor.bufferView < root.bufferViews.size()));
+        assert((accessor.bufferView >= 0) && (static_cast<size_t>(accessor.bufferView) < root.bufferViews.size()));
         tinygltf::BufferView buffer_view = root.bufferViews[accessor.bufferView];
 
-        assert((buffer_view.buffer >= 0) && ((unsigned long)buffer_view.buffer < root.buffers.size()));
+        assert((buffer_view.buffer >= 0) && (static_cast<size_t>(buffer_view.buffer) < root.buffers.size()));
         tinygltf::Buffer buffer = root.buffers[buffer_view.buffer];
 
         if (attr.first.compare("POSITION") == 0) {
@@ -356,20 +356,20 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     glGenBuffers(1, &ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-    assert((prim.indices >= 0) && ((unsigned long)prim.indices < root.accessors.size()));
+    assert((prim.indices >= 0) && (static_cast<size_t>(prim.indices) < root.accessors.size()));
     tinygltf::Accessor indices_accessor = root.accessors[prim.indices];
     
-    assert((indices_accessor.bufferView >= 0) && ((unsigned long)indices_accessor.bufferView < root.bufferViews.size()));
+    assert((indices_accessor.bufferView >= 0) && (static_cast<size_t>(indices_accessor.bufferView) < root.bufferViews.size()));
     tinygltf::BufferView indices_buffer_view = root.bufferViews[indices_accessor.bufferView];
 
-    assert((indices_buffer_view.buffer >= 0) && ((unsigned long)indices_buffer_view.buffer < root.buffers.size()));
+    assert((indices_buffer_view.buffer >= 0) && (static_cast<size_t>(indices_buffer_view.buffer) < root.buffers.size()));
     tinygltf::Buffer indices_buffer = root.buffers[indices_buffer_view.buffer];
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_buffer_view.byteLength, indices_buffer.data.data() + indices_buffer_view.byteOffset, GL_STATIC_DRAW);
 
     glBindVertexArray(0);
 
-    assert((prim.material >= 0) && ((unsigned long)prim.material < root.materials.size()));
+    assert((prim.material >= 0) && (static_cast<size_t>(prim.material) < root.materials.size()));
     tinygltf::Material mat = root.materials[prim.material];
 
     material = GltfMaterial(root, mat, shader_store, has_normals);
@@ -383,7 +383,7 @@ void GltfPrimitive::draw(const mat4& node_transform) const {
 
     material.activate(node_transform);
 
-    glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, (void*)0);
+    glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, static_cast<void*>(0));
     glBindVertexArray(0);
 }
 
@@ -394,6 +394,6 @@ void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> uniforms
 void GltfPrimitive::drawWithoutTextures() const {
     glBindVertexArray(vao);
 
-    glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, (void*)0);
+    glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, static_cast<void*>(0));
     glBindVertexArray(0);
 }
