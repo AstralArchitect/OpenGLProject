@@ -27,7 +27,7 @@ extern glm::vec3 pointLightColor;
 // background strength
 extern glm::vec3 backgroundColor;
 
-void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model, Object &light, glm::mat4 lightSpaceMatrix, GLuint depthMap)
+void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model, GltfModel &light, glm::mat4 lightSpaceMatrix, GLuint depthMap)
 {
     // view/projection/world transformations
     // -------------------------------
@@ -91,21 +91,23 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model
 
     // Light object
     // ------------
-    light.shader.use();
-    light.shader.setMat4("projection", projection);
-    light.shader.setMat4("view", view);
+    light.set_global_uniforms([&] (Shader* shader) {
+        shader->use();
+        shader->setMat4("projection", projection);
 
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, lightPos);
-    model = glm::scale(model, glm::vec3(0.075f));
-    light.shader.setMat4("model", model);
-        
-    light.shader.setVec3("color", pointLightColor);
+        shader->setMat4("view", view);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.075f));
+        shader->setMat4("model", model);
+            
+        shader->setVec3("color", pointLightColor);
+    });    
 
     light.draw();
 }
 
-void Render::renderScene(GLFWwindow *window, Object &plan, GltfModel &gltf_model, Object &light, glm::mat4 const& lightSpaceMatrix)
+void Render::renderScene(GLFWwindow *window, Object &plan, GltfModel &gltf_model, GltfModel &light, glm::mat4 const& lightSpaceMatrix)
 {
     glm::mat4 model = glm::mat4(1.0f);
     // gltf model

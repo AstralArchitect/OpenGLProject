@@ -5,6 +5,6 @@
 #include <vector>
 
 namespace Render {
-    void renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model, Object &light, glm::mat4 lightSpaceMatrix, GLuint depthMap);
-    void renderScene(GLFWwindow *window, Object &plan, GltfModel &gltf_model, Object &light, glm::mat4 const& lightSpaceMatrix);
+    void renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model, GltfModel &light, glm::mat4 lightSpaceMatrix, GLuint depthMap);
+    void renderScene(GLFWwindow *window, Object &plan, GltfModel &gltf_model, GltfModel &light, glm::mat4 const& lightSpaceMatrix);
 };

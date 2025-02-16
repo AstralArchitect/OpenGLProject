@@ -6,13 +6,15 @@
 #include <algorithm>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glad/glad.h>
 #include <callbacks.hpp>
 
 #define btogl(x) x ? GL_TRUE : GL_FALSE
 #define tget(x, y) std::get<x>(y)
 
-GltfModel::GltfModel(const char* filename, ShaderStore& shader_store) {
+GltfModel::GltfModel(const std::string& filename, ShaderStore& shader_store) {
     tinygltf::TinyGLTF loader;
     std::string err;
     std::string warn;
@@ -26,18 +28,18 @@ GltfModel::GltfModel(const char* filename, ShaderStore& shader_store) {
         printf("[Gltf] ERR: %s\n", err.c_str());
     }
 
-    if (!res) printf("Failed to load glTF: %s\n", filename);
-    else printf("Loaded glTF: %s\n", filename);
+    if (!res) printf("Failed to load glTF: %s\n", filename.c_str());
+    else printf("Loaded glTF: %s\n", filename.c_str());
 
-    const tinygltf::Scene &scene = tiny_model.scenes[tiny_model.defaultScene];
+    const tinygltf::Scene& scene = tiny_model.scenes[tiny_model.defaultScene];
     for (size_t i = 0; i < scene.nodes.size(); ++i) {
         assert((scene.nodes[i] >= 0) && ((unsigned long)scene.nodes[i] < tiny_model.nodes.size()));
-        children.push_back(GltfNode(tiny_model, tiny_model.nodes[scene.nodes[i]], shader_store));
+        children.push_back(GltfNode(tiny_model, tiny_model.nodes[scene.nodes[i]], shader_store, mat4(1.0)));
     }
 }
 
-void GltfModel::draw() {
-    for (GltfNode &child: this->children) {
+void GltfModel::draw() const {
+    for (const auto& child: children) {
         child.draw();
     }
 }
@@ -54,7 +56,28 @@ void GltfModel::drawWithoutTextures() {
     }
 }
 
-GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node, ShaderStore& shader_store) {
+GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node, ShaderStore& shader_store, mat4 parent_node_transform) {
+    if (node.translation.size() == 3) {
+        vec3 translation(node.translation[0], node.translation[1], node.translation[2]);
+
+        node_transform = glm::translate(mat4(1.0), translation);
+    }
+
+    if (node.rotation.size() == 4) {
+        quat rotation(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]);
+        mat4 rotation_mat = glm::mat4_cast(rotation);
+
+        node_transform = node_transform * rotation_mat;
+    }
+
+    if (node.scale.size() == 3) {
+        vec3 scale(node.scale[0], node.scale[1], node.scale[2]);
+
+        node_transform = glm::scale(node_transform, scale);
+    }
+
+    node_transform = parent_node_transform * node_transform;
+    
     mesh = ((node.mesh >= 0) && ((unsigned long)node.mesh < root.meshes.size())) ?
         std::optional(GltfMesh(root, root.meshes[node.mesh], shader_store)) :
         std::nullopt;
@@ -62,17 +85,17 @@ GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node, ShaderStore& shad
 
     for (size_t i = 0; i < node.children.size(); i++) {
         assert((node.children[i] >= 0) && ((unsigned long)node.children[i] < root.nodes.size()));
-        children.push_back(GltfNode(root, root.nodes[node.children[i]], shader_store));
+        children.push_back(GltfNode(root, root.nodes[node.children[i]], shader_store, node_transform));
     }
 }
 
-void GltfNode::draw() {
-    for (GltfNode &child: this->children) {
+void GltfNode::draw() const {
+    for (const auto& child: children) {
         child.draw();
     }
 
-    if (this->mesh.has_value()) {
-        this->mesh.value().draw();
+    if (mesh.has_value()) {
+        mesh.value().draw(node_transform);
     }
 }
 
@@ -115,9 +138,9 @@ void print_tuple(const std::tuple<T...> &tuple_to_print) {
     print_tuple_util(tuple_to_print, std::make_index_sequence<sizeof...(T)>());
 }
 
-void GltfMesh::draw() {
-    for (const auto &prim: this->primitives) {
-        prim.draw();
+void GltfMesh::draw(const mat4& node_transform) const {
+    for (const auto& prim: primitives) {
+        prim.draw(node_transform);
     }
 }
 
@@ -210,8 +233,9 @@ GltfMaterial::GltfMaterial(tinygltf::Model &root, tinygltf::Material material, S
     printf("Textures loaded !\n");
 }
 
-void GltfMaterial::activate() const {
+void GltfMaterial::activate(const mat4& node_transform) const {
     mat_shader->use();
+    mat_shader->setMat4("model", node_transform);
 
     if (basecolor_gputex.has_value()) {
         glActiveTexture(GL_TEXTURE0);
@@ -354,10 +378,10 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     vertex_count = indices_accessor.count;
 }
 
-void GltfPrimitive::draw() const {
+void GltfPrimitive::draw(const mat4& node_transform) const {
     glBindVertexArray(vao);
 
-    material.activate();
+    material.activate(node_transform);
 
     glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, (void*)0);
     glBindVertexArray(0);

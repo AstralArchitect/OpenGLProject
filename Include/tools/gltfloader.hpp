@@ -6,12 +6,15 @@
 #include <tiny_gltf.h>
 #include <glad/glad.h>
 #include <tools/shader.hpp>
+#include <glm/glm.hpp>
+
+using namespace glm;
 
 class GltfMaterial {
     public:
         GltfMaterial(tinygltf::Model &root, tinygltf::Material mat, ShaderStore& shader_store, bool has_normals);
         GltfMaterial() {};
-        void activate() const;
+        void activate(const mat4& node_transform) const;
         void set_material_uniforms(std::function<void(Shader*)>);
 
     private:
@@ -26,7 +29,7 @@ class GltfMaterial {
 class GltfPrimitive {
     public:
         GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &prim, ShaderStore& shader_store);
-        void draw() const;
+        void draw(const mat4& node_transform) const;
         void drawWithoutTextures() const;
         void set_primitive_uniforms(std::function<void(Shader*)>);
     
@@ -40,7 +43,7 @@ class GltfPrimitive {
 class GltfMesh {
     public:
         GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh, ShaderStore& shader_store);
-        void draw();
+        void draw(const mat4& node_transform) const;
         void drawWithoutTextures();
         void set_mesh_uniforms(std::function<void(Shader*)>);
 
@@ -50,21 +53,22 @@ class GltfMesh {
 
 class GltfNode {
     public:
-        GltfNode(tinygltf::Model &root, tinygltf::Node node, ShaderStore& shader_store);
-        void draw();
+        GltfNode(tinygltf::Model &root, tinygltf::Node node, ShaderStore& shader_store, mat4 node_transform);
+        void draw() const;
         void drawWithoutTextures();
         void set_node_uniforms(std::function<void(Shader*)>);
 
     private:
         std::optional<GltfMesh> mesh;
         std::vector<GltfNode> children;
+        mat4 node_transform;
 };
 
 class GltfModel {
     public:
-        GltfModel(const char* filename, ShaderStore& shader_store);
+        GltfModel(const std::string& filename, ShaderStore& shader_store);
         // TODO: créer un destructeur pour cette class
-        void draw();
+        void draw() const;
         void drawWithoutTextures();
         void set_global_uniforms(std::function<void(Shader*)>);
 
