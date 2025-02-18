@@ -107,7 +107,7 @@ int main()
 
     // shadows
     // -------
-    Callback::Shadow_info shadow_info = {4096, 4096, 0, 0}; 
+    Callback::Shadow_info shadow_info = {2048, 2048, 0, 0}; 
     shadow_info.init();
     
     // render loop
