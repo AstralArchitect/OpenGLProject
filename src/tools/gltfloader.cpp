@@ -64,10 +64,10 @@ GltfNode::GltfNode(tinygltf::Model& root, tinygltf::Node node, ShaderStore& shad
     }
 
     if (node.rotation.size() == 4) {
-        quat rotation(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]);
+        glm::quat rotation(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]);
         mat4 rotation_mat = glm::mat4_cast(rotation);
 
-        node_transform = node_transform * rotation_mat;
+        node_transform *= rotation_mat;
     }
 
     if (node.scale.size() == 3) {
@@ -154,107 +154,6 @@ void GltfMesh::drawWithoutTextures() {
     for (const auto &prim: this->primitives) {
         prim.drawWithoutTextures();
     }
-}
-
-GLuint load_texture_to_gpu(tinygltf::Model& root, tinygltf::TextureInfo texinfo) {
-    assert((texinfo.index >= 0) && (static_cast<size_t>(texinfo.index) < root.textures.size()));
-    tinygltf::Texture gltftex = root.textures[texinfo.index];
-
-    assert((gltftex.source >= 0) && (static_cast<size_t>(gltftex.source) < root.images.size()));
-    tinygltf::Image image = root.images[gltftex.source];
-
-    assert((gltftex.sampler >= 0) && (static_cast<size_t>(gltftex.sampler) < root.textures.size()));
-    tinygltf::Sampler sampler = root.samplers[gltftex.sampler];
-
-    GLenum tex_components/*, tex_bits*/;
-    switch (image.component) {
-        case 3:
-            tex_components = GL_RGB;
-            //tex_bits = GL_RGB8;
-            break;
-
-        case 4:
-            tex_components = GL_RGBA;
-            //tex_bits = GL_RGBA8;
-            break;
-        default:
-            printf("%d components isn't supported right now", image.component);
-            throw -1;
-    }
-
-    assert(image.as_is == false);
-
-    GLuint gputex;
-    glGenTextures(1, &gputex);
-    glBindTexture(GL_TEXTURE_2D, gputex);
-    glTexImage2D(GL_TEXTURE_2D, 0, tex_components, image.width, image.height, 0, tex_components, image.pixel_type, image.image.data());
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, sampler.wrapS);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, sampler.wrapT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sampler.minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sampler.magFilter);
-
-    return gputex;
-}
-
-GltfMaterial::GltfMaterial(tinygltf::Model& root, tinygltf::Material material, ShaderStore& shader_store, bool has_normals) {
-    std::copy(material.pbrMetallicRoughness.baseColorFactor.cbegin(), material.pbrMetallicRoughness.baseColorFactor.cbegin() + 3, basecolor);
-    metallic_factor = material.pbrMetallicRoughness.metallicFactor;
-    roughness_factor = material.pbrMetallicRoughness.roughnessFactor;
-
-    tinygltf::TextureInfo basecolor_texinfo = material.pbrMetallicRoughness.baseColorTexture;
-    tinygltf::TextureInfo metallic_roughness_texinfo = material.pbrMetallicRoughness.metallicRoughnessTexture;
-
-    std::bitset<3> shader_features;
-
-    printf("Loading textures...\n");
-    if (basecolor_texinfo.index >= 0) {
-        basecolor_gputex = std::optional(load_texture_to_gpu(root, basecolor_texinfo));
-
-        shader_features.set(1);
-    } else {
-        basecolor_gputex = std::nullopt;
-    }
-
-    if (metallic_roughness_texinfo.index >= 0) {
-        metallic_roughness_gputex = std::optional(load_texture_to_gpu(root, metallic_roughness_texinfo));
-
-        shader_features.set(2);
-    } else {
-        metallic_roughness_gputex = std::nullopt;
-    }
-
-    if (has_normals) {
-        shader_features.set(0);
-    }
-
-    mat_shader = &shader_store.get_shader(shader_features);
-
-    printf("Textures loaded !\n");
-}
-
-void GltfMaterial::activate(const mat4& node_transform) const {
-    mat_shader->use();
-    mat_shader->setMat4("model", node_transform);
-
-    if (basecolor_gputex.has_value()) {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, basecolor_gputex.value());
-    } else {
-        mat_shader->setVec3("base_color", glm::vec3(basecolor[0], basecolor[1], basecolor[2]));
-    }
-
-    if (metallic_roughness_gputex.has_value()) {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, metallic_roughness_gputex.value());
-    } else {
-        mat_shader->setFloat("metallic_factor", metallic_factor);
-        mat_shader->setFloat("roughness_factor", roughness_factor);
-    }
-}
-
-void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_fn) {
-    uniforms_fn(mat_shader);
 }
 
 GltfPrimitive::GltfPrimitive(tinygltf::Model& root, const tinygltf::Primitive& prim, ShaderStore& shader_store) {
@@ -396,4 +295,105 @@ void GltfPrimitive::drawWithoutTextures() const {
 
     glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, static_cast<void*>(0));
     glBindVertexArray(0);
+}
+
+GLuint load_texture_to_gpu(tinygltf::Model& root, tinygltf::TextureInfo texinfo) {
+    assert((texinfo.index >= 0) && (static_cast<size_t>(texinfo.index) < root.textures.size()));
+    tinygltf::Texture gltftex = root.textures[texinfo.index];
+
+    assert((gltftex.source >= 0) && (static_cast<size_t>(gltftex.source) < root.images.size()));
+    tinygltf::Image image = root.images[gltftex.source];
+
+    assert((gltftex.sampler >= 0) && (static_cast<size_t>(gltftex.sampler) < root.textures.size()));
+    tinygltf::Sampler sampler = root.samplers[gltftex.sampler];
+
+    GLenum tex_components/*, tex_bits*/;
+    switch (image.component) {
+        case 3:
+            tex_components = GL_RGB;
+            //tex_bits = GL_RGB8;
+            break;
+
+        case 4:
+            tex_components = GL_RGBA;
+            //tex_bits = GL_RGBA8;
+            break;
+        default:
+            printf("%d components isn't supported right now", image.component);
+            throw -1;
+    }
+
+    assert(image.as_is == false);
+
+    GLuint gputex;
+    glGenTextures(1, &gputex);
+    glBindTexture(GL_TEXTURE_2D, gputex);
+    glTexImage2D(GL_TEXTURE_2D, 0, tex_components, image.width, image.height, 0, tex_components, image.pixel_type, image.image.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, sampler.wrapS);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, sampler.wrapT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sampler.minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sampler.magFilter);
+
+    return gputex;
+}
+
+GltfMaterial::GltfMaterial(tinygltf::Model& root, tinygltf::Material material, ShaderStore& shader_store, bool has_normals) {
+    std::copy(material.pbrMetallicRoughness.baseColorFactor.cbegin(), material.pbrMetallicRoughness.baseColorFactor.cbegin() + 3, basecolor);
+    metallic_factor = material.pbrMetallicRoughness.metallicFactor;
+    roughness_factor = material.pbrMetallicRoughness.roughnessFactor;
+
+    tinygltf::TextureInfo basecolor_texinfo = material.pbrMetallicRoughness.baseColorTexture;
+    tinygltf::TextureInfo metallic_roughness_texinfo = material.pbrMetallicRoughness.metallicRoughnessTexture;
+
+    std::bitset<3> shader_features;
+
+    printf("Loading textures...\n");
+    if (basecolor_texinfo.index >= 0) {
+        basecolor_gputex = std::optional(load_texture_to_gpu(root, basecolor_texinfo));
+
+        shader_features.set(1);
+    } else {
+        basecolor_gputex = std::nullopt;
+    }
+
+    if (metallic_roughness_texinfo.index >= 0) {
+        metallic_roughness_gputex = std::optional(load_texture_to_gpu(root, metallic_roughness_texinfo));
+
+        shader_features.set(2);
+    } else {
+        metallic_roughness_gputex = std::nullopt;
+    }
+
+    if (has_normals) {
+        shader_features.set(0);
+    }
+
+    mat_shader = &shader_store.get_shader(shader_features);
+
+    printf("Textures loaded !\n");
+}
+
+void GltfMaterial::activate(const mat4& node_transform) const {
+    mat_shader->use();
+    mat_shader->setMat4("model", node_transform);
+
+    if (basecolor_gputex.has_value()) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, basecolor_gputex.value());
+    } else {
+        mat_shader->setVec3("base_color", glm::vec3(basecolor[0], basecolor[1], basecolor[2]));
+    }
+
+    if (metallic_roughness_gputex.has_value()) {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, metallic_roughness_gputex.value());
+    } else {
+        mat_shader->setFloat("metallic_factor", metallic_factor);
+        mat_shader->setFloat("roughness_factor", roughness_factor);
+    }
+}
+
+void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    uniforms_fn(mat_shader);
 }

@@ -76,15 +76,24 @@ void main() {
     vec3 halfwayDir = normalize(lightDir + viewDir);  
     spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
     vec3 specular = vec3(0.3) * spec; // assuming bright white light color
-#endif
 
     // calculate shadow
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
     float shadow = ShadowCalculation(fs_in.FragPosLightSpace, bias);
-    
+
 #ifdef HAS_BASE_COLOR_TEX
     FragColor = vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0);
 #else
     FragColor = vec4(ambient + (1.0 - shadow), 1.0);
+#endif
+
+#else
+
+#ifdef HAS_BASE_COLOR_TEX
+    FragColor = vec4(ambient + diffuse + specular, 1.0);
+#else
+    FragColor = vec4(ambient, 1.0);
+#endif
+
 #endif
 }
