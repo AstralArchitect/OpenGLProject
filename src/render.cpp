@@ -69,10 +69,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model
 
     // world transformation
     model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    model = glm::translate(model, glm::vec3(0.0f, -0.25f, .3f));
-    model = glm::scale(model, glm::vec3(1.0f / 10));
+    model = glm::scale(model, glm::vec3(sin(glfwGetTime()) / 2 + .5f));
 
     gltf_model.set_global_uniforms([&] (Shader* shader) {
         shader->use();
@@ -81,28 +78,31 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model
         shader->setVec3("ambientColor", backgroundColor);
         shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
         shader->setVec3("ambientColor", backgroundColor);
-        shader->setMat4("model", model);
         shader->setMat4("view", view);
         shader->setMat4("projection", projection);
-    });
+        shader->setInt("shadowMap", 2);
+    }, model);
 
     // draw
     gltf_model.draw();
 
     // Light object
     // ------------
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, lightPos);
+    model = glm::scale(model, glm::vec3(0.075f));
+
     light.set_global_uniforms([&] (Shader* shader) {
         shader->use();
-        shader->setMat4("projection", projection);
-
+        shader->setVec3("viewPos", camera.Position);
+        shader->setVec3("lightPos", lightPos);
+        shader->setVec3("ambientColor", backgroundColor);
+        shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        shader->setVec3("ambientColor", backgroundColor);
         shader->setMat4("view", view);
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.075f));
-        shader->setMat4("model", model);
-            
-        shader->setVec3("color", pointLightColor);
-    });    
+        shader->setMat4("projection", projection);
+        shader->setInt("shadowMap", 2);
+    }, model);    
 
     light.draw();
 }

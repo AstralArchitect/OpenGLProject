@@ -44,9 +44,9 @@ void GltfModel::draw() const {
     }
 }
 
-void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn) {
+void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform) {
     for (auto& child: children) {
-        child.set_node_uniforms(uniforms_fn);
+        child.set_node_uniforms(uniforms_fn, model_transform);
     }
 }
 
@@ -99,13 +99,13 @@ void GltfNode::draw() const {
     }
 }
 
-void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn) {
+void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform) {
     for (auto& child: children) {
-        child.set_node_uniforms(uniforms_fn);
+        child.set_node_uniforms(uniforms_fn, model_transform);
     }
 
     if (this->mesh.has_value()) {
-        this->mesh.value().set_mesh_uniforms(uniforms_fn);
+        this->mesh.value().set_mesh_uniforms(uniforms_fn, model_transform);
     }
 }
 
@@ -144,9 +144,9 @@ void GltfMesh::draw(const mat4& node_transform) const {
     }
 }
 
-void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn) {
+void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform) {
     for (auto& prim: primitives) {
-        prim.set_primitive_uniforms(uniforms_fn);
+        prim.set_primitive_uniforms(uniforms_fn, model_transform);
     }
 }
 
@@ -286,8 +286,8 @@ void GltfPrimitive::draw(const mat4& node_transform) const {
     glBindVertexArray(0);
 }
 
-void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> uniforms_fn) {
-    material.set_material_uniforms(uniforms_fn);
+void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform) {
+    material.set_material_uniforms(uniforms_fn, model_transform);
 }
 
 void GltfPrimitive::drawWithoutTextures() const {
@@ -376,7 +376,7 @@ GltfMaterial::GltfMaterial(tinygltf::Model& root, tinygltf::Material material, S
 
 void GltfMaterial::activate(const mat4& node_transform) const {
     mat_shader->use();
-    mat_shader->setMat4("model", node_transform);
+    mat_shader->setMat4("model", node_transform * model_transform);
 
     if (basecolor_gputex.has_value()) {
         glActiveTexture(GL_TEXTURE0);
@@ -394,6 +394,7 @@ void GltfMaterial::activate(const mat4& node_transform) const {
     }
 }
 
-void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_fn) {
+void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform) {
     uniforms_fn(mat_shader);
+    this->model_transform = model_transform;
 }

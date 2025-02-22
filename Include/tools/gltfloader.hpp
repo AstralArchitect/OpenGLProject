@@ -15,7 +15,7 @@ class GltfMaterial {
         GltfMaterial(tinygltf::Model& root, tinygltf::Material mat, ShaderStore& shader_store, bool has_normals);
         GltfMaterial() {};
         void activate(const mat4& node_transform) const;
-        void set_material_uniforms(std::function<void(Shader*)>);
+        void set_material_uniforms(std::function<void(Shader*)>, const mat4& model_transform);
 
     private:
         std::optional<GLuint> basecolor_gputex;
@@ -24,6 +24,7 @@ class GltfMaterial {
         double metallic_factor;
         double roughness_factor;
         Shader* mat_shader;
+        mat4 model_transform;
 };
 
 class GltfPrimitive {
@@ -31,7 +32,7 @@ class GltfPrimitive {
         GltfPrimitive(tinygltf::Model& root, const tinygltf::Primitive& prim, ShaderStore& shader_store);
         void draw(const mat4& node_transform) const;
         void drawWithoutTextures() const;
-        void set_primitive_uniforms(std::function<void(Shader*)>);
+        void set_primitive_uniforms(std::function<void(Shader*)>, const mat4& model_transform);
     
     private:
         GLuint vao;
@@ -45,7 +46,7 @@ class GltfMesh {
         GltfMesh(tinygltf::Model& root, tinygltf::Mesh mesh, ShaderStore& shader_store);
         void draw(const mat4& node_transform) const;
         void drawWithoutTextures();
-        void set_mesh_uniforms(std::function<void(Shader*)>);
+        void set_mesh_uniforms(std::function<void(Shader*)>, const mat4& model_transform);
 
     private:
         std::vector<GltfPrimitive> primitives;
@@ -56,7 +57,7 @@ class GltfNode {
         GltfNode(tinygltf::Model& root, tinygltf::Node node, ShaderStore& shader_store, mat4 node_transform);
         void draw() const;
         void drawWithoutTextures();
-        void set_node_uniforms(std::function<void(Shader*)>);
+        void set_node_uniforms(std::function<void(Shader*)>, const mat4& model_transform);
 
     private:
         std::optional<GltfMesh> mesh;
@@ -70,7 +71,7 @@ class GltfModel {
         // TODO: créer un destructeur pour cette class
         void draw() const;
         void drawWithoutTextures();
-        void set_global_uniforms(std::function<void(Shader*)>);
+        void set_global_uniforms(std::function<void(Shader*)>, const mat4& model_transform);
 
     private:
         tinygltf::Model tiny_model;
