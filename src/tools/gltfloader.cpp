@@ -82,7 +82,7 @@ GltfNode::GltfNode(tinygltf::Model& root, tinygltf::Node node, ShaderStore& shad
     node_transform = parent_node_transform * node_transform;
     
     mesh = ((node.mesh >= 0) && (static_cast<size_t>(node.mesh) < root.meshes.size())) ?
-        std::optional(GltfMesh(root, root.meshes[node.mesh], shader_store)) :
+        std::optional(GltfMesh(root, root.meshes[node.mesh], shader_store, node.emitter)) :
         std::nullopt;
 
 
@@ -122,9 +122,9 @@ void GltfNode::drawWithoutTextures() {
     }
 }
 
-GltfMesh::GltfMesh(tinygltf::Model& root, tinygltf::Mesh mesh, ShaderStore& shader_store) {
+GltfMesh::GltfMesh(tinygltf::Model& root, tinygltf::Mesh mesh, ShaderStore& shader_store, int emmission) {
     for (const auto& prim : mesh.primitives) {
-        primitives.push_back(GltfPrimitive(root, prim, shader_store));
+        primitives.push_back(GltfPrimitive(root, prim, shader_store, emmission));
     }
 }
 
@@ -159,7 +159,7 @@ void GltfMesh::drawWithoutTextures() {
     }
 }
 
-GltfPrimitive::GltfPrimitive(tinygltf::Model& root, const tinygltf::Primitive& prim, ShaderStore& shader_store) {
+GltfPrimitive::GltfPrimitive(tinygltf::Model& root, const tinygltf::Primitive& prim, ShaderStore& shader_store, int emmission) {
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 

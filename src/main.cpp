@@ -15,6 +15,11 @@
 
 #include <cstdio>
 
+struct Light {
+    glm::vec3 position;
+    int strength;
+};
+
 // settings
 unsigned int SCR_WIDTH  = 1920;
 unsigned int SCR_HEIGHT = 1080;
@@ -33,6 +38,8 @@ glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
 
 // background strength
 glm::vec3 backgroundColor(0.4f, 0.4f, 0.4f);
+
+std::vector<Light> lights;
 
 int main()
 {

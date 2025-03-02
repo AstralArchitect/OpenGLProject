@@ -16,6 +16,16 @@ in VS_OUT {
 	vec4 FragPosLightSpace;
 } fs_in;
 
+struct Light {
+    vec3 position;
+    int strength;
+};
+
+layout (std140) uniform Lights {
+    int size;
+    Light lights[];
+};
+
 #ifdef HAS_BASE_COLOR_TEX
 uniform sampler2D tex;
 #else
@@ -115,9 +125,9 @@ void main() {
     float shadow = ShadowCalculation(fs_in.FragPosLightSpace);
 #endif
 
-    #ifdef HAS_BASE_COLOR_TEX
+#ifdef HAS_BASE_COLOR_TEX
     FragColor = vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0);
-    #else
+#else
     FragColor = vec4(ambient + (1.0 - shadow) * color, 1.0);
-    #endif
+#endif
 }

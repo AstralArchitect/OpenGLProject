@@ -31,7 +31,7 @@ class GltfMaterial {
 
 class GltfPrimitive {
     public:
-        GltfPrimitive(tinygltf::Model& root, const tinygltf::Primitive& prim, ShaderStore& shader_store);
+        GltfPrimitive(tinygltf::Model& root, const tinygltf::Primitive& prim, ShaderStore& shader_store, int emmission);
         void draw(const mat4& node_transform) const;
         void drawWithoutTextures() const;
         inline void set_primitive_uniforms(std::function<void(Shader*)>, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
@@ -46,7 +46,7 @@ class GltfPrimitive {
 
 class GltfMesh {
     public:
-        GltfMesh(tinygltf::Model& root, tinygltf::Mesh mesh, ShaderStore& shader_store);
+        GltfMesh(tinygltf::Model& root, tinygltf::Mesh mesh, ShaderStore& shader_store, int emmission);
         void draw(const mat4& node_transform) const;
         void drawWithoutTextures();
         inline void set_mesh_uniforms(std::function<void(Shader*)>, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
