@@ -10,9 +10,8 @@ layout (location = 1) in vec2 aTexCoords;
 layout (location = 2) in vec3 aNormal;
 #endif
 
+uniform mat4 transform;
 uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
 uniform mat4 lightSpaceMatrix;
 
 out VS_OUT {
@@ -43,5 +42,5 @@ void main()
 
 	vs_out.FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
 	
-	gl_Position = projection * view * vec4(vs_out.FragPos, 1.0);
+	gl_Position = transform * vec4(aPos, 1.0);
 }
