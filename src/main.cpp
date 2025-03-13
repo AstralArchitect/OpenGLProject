@@ -15,6 +15,11 @@
 
 #include <cstdio>
 
+struct Light {
+    glm::vec3 position;
+    int strength;
+};
+
 // settings
 unsigned int SCR_WIDTH  = 1920;
 unsigned int SCR_HEIGHT = 1080;
@@ -32,7 +37,9 @@ glm::vec3 lightPos(1.0/*cos(0)*/, 1.0, 0.0f/*sin(0)*/);
 glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
 
 // background strength
-glm::vec3 backgroundColor(0.15f, 0.15f, 0.15f);
+glm::vec3 backgroundColor(0.2f, 0.2f, 0.2f);
+
+std::vector<Light> lights;
 
 int main()
 {
@@ -65,7 +72,9 @@ int main()
         -0.5f, -0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  4.0f
     };
 
-    Object lightBulb("res/models/light_bulb.glb", "res/shaders/light_bulb/vertex.vs", "res/shaders/light_bulb/fragment.fs");
+    ShaderStore shader_store("./res/shaders/pbr");
+
+    GltfModel lightBulb("res/models/light_bulb.glb", shader_store);
 
     std::vector<GLuint> planText = {loadTexture((char*)"res/textures/bois.jpg", true), loadTexture((char*)"res/textures/bois_specular.jpg", true)};
     Object plan(planVertices, sizeof(planVertices), true, true, true, "res/shaders/plan/plan.vs", "res/shaders/plan/plan.fs", planText);
@@ -73,8 +82,6 @@ int main()
     plan.shader.setInt("colorMap", 0);
     plan.shader.setInt("specularMap", 1);
     plan.shader.setInt("shadowMap", 2);
-
-    ShaderStore shader_store("./res/shaders/pbr");
 
     GltfModel gltfobj("./res/models/horloge.glb", shader_store);
 
@@ -130,7 +137,7 @@ int main()
 
         // render
         // ------
-        glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 0.1);
+        glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, 0.1f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // 1. render depth of scene to texture (from light's perspective)

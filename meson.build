@@ -1,5 +1,10 @@
 project('OpenGL', 'c', 'cpp', version : 'pre-release', default_options: ['cpp_std=c++20'])
 
+cpp_compiler = meson.get_compiler('cpp')
+if cpp_compiler.get_id() == 'gcc'
+  add_global_arguments('-std=gnu++20', language: 'cpp')
+endif
+
 cpp_dir = 'src/'
 
 personnal_cpp_libs = cpp_dir + 'libs/'
