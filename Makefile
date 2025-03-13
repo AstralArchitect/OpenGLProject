@@ -10,9 +10,6 @@ else
 	./builddir/main
 endif
 
-# Target to set up the build directory
-setupClang:
-	meson setup builddir --native-file=native-clang.txt
 setup:
 	meson setup builddir
 
