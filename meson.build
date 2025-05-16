@@ -30,3 +30,4 @@ tinygltf = cmake.subproject('tinygltf', options: opt_var)
 tinygltf_dep = tinygltf.dependency('tinygltf')
 
 executable('main', sources: sources, include_directories: include_dir, dependencies: [glfw_dep, glm_dep, tinygltf_dep])
+
