@@ -28,26 +28,6 @@ Object::Object(float *vertices, unsigned long verticesSize, bool UVs, bool norma
     depth = false;
 }
 
-Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath, std::string depthVertexPath, std::string depthFragmentPath)
-{
-    model = new GltfModel((const char *)modelPath.c_str());
-    shader = Shader(vertexPath, fragmentPath);
-    depthShader = new Shader(depthVertexPath, depthFragmentPath);
-
-    gltf = true;
-    depth = true;
-}
-
-Object::Object(std::string modelPath, std::string vertexPath, std::string fragmentPath)
-{
-    model = new GltfModel((const char *)modelPath.c_str());
-    shader = Shader(vertexPath, fragmentPath);
-    depthShader = nullptr;
-
-    gltf = true;
-    depth = false;
-}
-
 Object::~Object()
 {
     if (gltf)
@@ -71,7 +51,7 @@ void Object::draw()
 {
     if (gltf)
     {
-        model->draw(shader);
+        model->draw();
         shader.unuse();
         return;
     }
@@ -80,21 +60,6 @@ void Object::draw()
     // unbinde shader & VAO
     glBindVertexArray(0);
     shader.unuse();
-}
-
-void Object::drawWithoutTexture()
-{
-    if (gltf)
-    {
-        model->drawWithoutTextures();
-        depthShader->unuse();
-        return;
-    }
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, numVertices);
-    // unbinde shader & VAO
-    glBindVertexArray(0);
-    depthShader->unuse();
 }
 
 GLuint Object::getText(unsigned short indice)

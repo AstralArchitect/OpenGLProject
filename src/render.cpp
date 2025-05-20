@@ -27,7 +27,7 @@ extern glm::vec3 pointLightColor;
 // background strength
 extern glm::vec3 backgroundColor;
 
-void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 lightSpaceMatrix, GLuint depthMap)
+void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model, GltfModel &light, glm::mat4 lightSpaceMatrix, GLuint depthMap)
 {
     // view/projection/world transformations
     // -------------------------------
@@ -66,53 +66,52 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, Object &gltf_model, O
 
     // gltf model
     // ----------
-    gltf_model.shader.use();
-    gltf_model.shader.setVec3("viewPos", camera.Position);
-    gltf_model.shader.setVec3("lightPos", lightPos);
-    gltf_model.shader.setVec3("ambientColor", backgroundColor);
-    gltf_model.shader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-
-    gltf_model.shader.setVec3("ambientColor", backgroundColor);
 
     // world transformation
     model = glm::mat4(1.0f);
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    model = glm::translate(model, glm::vec3(0.0f, -0.25f, .3f));
-    model = glm::scale(model, glm::vec3(1.0f / 10));
-    gltf_model.shader.setMat4("model", model);
-    gltf_model.shader.setMat4("view", view);
-    gltf_model.shader.setMat4("projection", projection);
+    //model = glm::rotate(model, (float)glfwGetTime() / 2.f, glm::vec3(0.0, 1.0, 0.0));
+    model = glm::scale(model, glm::vec3(.5f));
+    model = glm::translate(model, glm::vec3(.0, -2, 0.0));
+
+    gltf_model.set_global_uniforms([&] (Shader* shader) {
+        shader->use();
+        shader->setVec3("viewPos", camera.Position);
+        shader->setVec3("lightPos", lightPos);
+        shader->setVec3("ambientColor", backgroundColor);
+        shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        shader->setVec3("ambientColor", backgroundColor);
+        shader->setInt("shadowMap", 2);
+    }, model, view, projection);
 
     // draw
     gltf_model.draw();
 
     // Light object
     // ------------
-    light.shader.use();
-    light.shader.setMat4("projection", projection);
-    light.shader.setMat4("view", view);
-
+    // world transformation
     model = glm::mat4(1.0f);
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.075f));
-    light.shader.setMat4("model", model);
-        
-    light.shader.setVec3("color", pointLightColor);
 
+    light.set_global_uniforms([&] (Shader* shader) {
+        shader->use();
+        shader->setVec3("viewPos", camera.Position);
+        shader->setVec3("lightPos", lightPos);
+        shader->setVec3("ambientColor", backgroundColor);
+        shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        shader->setVec3("ambientColor", backgroundColor);
+        shader->setInt("shadowMap", 2);
+    }, model, view, projection);    
+
+    //draw
     light.draw();
 }
 
-void Render::renderScene(GLFWwindow *window, Object &plan, Object &gltf_model, Object &light, glm::mat4 const& lightSpaceMatrix)
+void Render::renderScene(GLFWwindow *window, Object &plan, GltfModel &gltf_model, GltfModel &light, glm::mat4 const& lightSpaceMatrix)
 {
     glm::mat4 model = glm::mat4(1.0f);
     // gltf model
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    model = glm::translate(model, glm::vec3(0.0f, -0.25f, .3f));
-    model = glm::scale(model, glm::vec3(1.0f / 10));
-    gltf_model.depthShader->use();
-    gltf_model.depthShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-    gltf_model.depthShader->setMat4("model", model);
-    gltf_model.drawWithoutTexture();
+    model = glm::scale(model, glm::vec3(.5f));
+    model = glm::translate(model, glm::vec3(.0, -2, 0.0));
+    gltf_model.draw(true, lightSpaceMatrix);
 }

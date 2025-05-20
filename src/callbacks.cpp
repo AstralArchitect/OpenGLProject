@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -6,6 +8,7 @@
 #include <callbacks.hpp>
 
 #include <stb_image.h>
+#include <iostream>
 
 extern Camera camera;
 

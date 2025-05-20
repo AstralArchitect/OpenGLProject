@@ -6,19 +6,18 @@
 #include <algorithm>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glad/glad.h>
 #include <callbacks.hpp>
 
 #define btogl(x) x ? GL_TRUE : GL_FALSE
 #define tget(x, y) std::get<x>(y)
 
-GltfModel::GltfModel(const char* filename) {
+GltfModel::GltfModel(const std::string& filename, ShaderStore& shader_store) {
     tinygltf::TinyGLTF loader;
     std::string err;
     std::string warn;
-
-    //tinygltf::Model tiny_model;
-    //std::vector<GltfNode> children;
 
     bool res = loader.LoadBinaryFromFile(&tiny_model, &err, &warn, filename);
     if (!warn.empty()) {
@@ -29,63 +28,87 @@ GltfModel::GltfModel(const char* filename) {
         printf("[Gltf] ERR: %s\n", err.c_str());
     }
 
-    if (!res) printf("Failed to load glTF: %s\n", filename);
-    else printf("Loaded glTF: %s\n", filename);
+    if (!res) printf("Failed to load glTF: %s\n", filename.c_str());
+    else printf("Loaded glTF: %s\n", filename.c_str());
 
-    const tinygltf::Scene &scene = tiny_model.scenes[tiny_model.defaultScene];
+    const tinygltf::Scene& scene = tiny_model.scenes[tiny_model.defaultScene];
     for (size_t i = 0; i < scene.nodes.size(); ++i) {
-        assert((scene.nodes[i] >= 0) && ((unsigned long)scene.nodes[i] < tiny_model.nodes.size()));
-        children.push_back(GltfNode(tiny_model, tiny_model.nodes[scene.nodes[i]]));
+        assert((scene.nodes[i] >= 0) && (static_cast<size_t>(scene.nodes[i]) < tiny_model.nodes.size()));
+        children.push_back(GltfNode(tiny_model, tiny_model.nodes[scene.nodes[i]], shader_store, mat4(1.0f)));
     }
 }
 
-void GltfModel::draw(Shader &shader) {
-    for (GltfNode &child: this->children) {
-        child.draw(shader);
+void GltfModel::draw(bool depth, glm::mat4 const& lightSpaceMatrix) const {
+    for (const auto& child: children) {
+        child.draw(depth);
     }
 }
 
-void GltfModel::drawWithoutTextures() {
-    for (GltfNode &child: this->children) {
-        child.drawWithoutTextures();
+// Warning, when setting uniform for a model, don't touch directly (by shader.setMat4) the view and projection matrices set them by passing them as arguments to the set_global_uniform function
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
+    for (auto& child: children) {
+        child.set_node_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
     }
 }
 
-GltfNode::GltfNode(tinygltf::Model &root, tinygltf::Node node) {
-    mesh = ((node.mesh >= 0) && ((unsigned long)node.mesh < root.meshes.size())) ?
-        std::optional(GltfMesh(root, root.meshes[node.mesh])) :
+GltfNode::GltfNode(tinygltf::Model& root, tinygltf::Node node, ShaderStore& shader_store, mat4 parent_node_transform) {
+    node_transform = mat4(1.0);
+    if (node.translation.size() == 3) {
+        vec3 translation(node.translation[0], node.translation[1], node.translation[2]);
+
+        node_transform = glm::translate(mat4(1.0), translation);
+    }
+
+    if (node.rotation.size() == 4) {
+        glm::quat rotation(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]);
+        mat4 rotation_mat = glm::mat4_cast(rotation);
+
+        node_transform *= rotation_mat;
+    }
+
+    if (node.scale.size() == 3) {
+        vec3 scale(node.scale[0], node.scale[1], node.scale[2]);
+
+        node_transform = glm::scale(node_transform, scale);
+    }
+
+    node_transform = parent_node_transform * node_transform;
+    
+    mesh = ((node.mesh >= 0) && (static_cast<size_t>(node.mesh) < root.meshes.size())) ?
+        std::optional(GltfMesh(root, root.meshes[node.mesh], shader_store, node.emitter)) :
         std::nullopt;
 
 
     for (size_t i = 0; i < node.children.size(); i++) {
-        assert((node.children[i] >= 0) && ((unsigned long)node.children[i] < root.nodes.size()));
-        children.push_back(GltfNode(root, root.nodes[node.children[i]]));
+        assert((node.children[i] >= 0) && (static_cast<size_t>(node.children[i]) < root.nodes.size()));
+        children.push_back(GltfNode(root, root.nodes[node.children[i]], shader_store, node_transform));
     }
 }
 
-void GltfNode::draw(Shader &shader) {
-    for (GltfNode &child: this->children) {
-        child.draw(shader);
+void GltfNode::draw(bool depth, glm::mat4 const& lightSpaceMatrix) const {
+    for (const auto& child: children) {
+        child.draw(depth);
+    }
+
+    if (mesh.has_value()) {
+        mesh.value().draw(node_transform, depth);
+    }
+}
+
+inline void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
+    for (auto& child: children) {
+        child.set_node_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
     }
 
     if (this->mesh.has_value()) {
-        this->mesh.value().draw(shader);
+        this->mesh.value().set_mesh_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
     }
 }
 
-void GltfNode::drawWithoutTextures() {
-    for (GltfNode &child: this->children) {
-        child.drawWithoutTextures();
-    }
-
-    if (this->mesh.has_value()) {
-        this->mesh.value().drawWithoutTextures();
-    }
-}
-
-GltfMesh::GltfMesh(tinygltf::Model &root, tinygltf::Mesh mesh) {
-    for (const tinygltf::Primitive &prim : mesh.primitives) {
-        primitives.push_back(GltfPrimitive(root, prim));
+GltfMesh::GltfMesh(tinygltf::Model& root, tinygltf::Mesh mesh, ShaderStore& shader_store, int emmission) {
+    for (const auto& prim : mesh.primitives) {
+        primitives.push_back(GltfPrimitive(root, prim, shader_store, emmission));
     }
 }
 
@@ -102,99 +125,20 @@ void print_tuple(const std::tuple<T...> &tuple_to_print) {
     print_tuple_util(tuple_to_print, std::make_index_sequence<sizeof...(T)>());
 }
 
-void GltfMesh::draw(Shader &shader) {
-    for (const auto &prim: this->primitives) {
-        prim.draw(shader);
+void GltfMesh::draw(const mat4& node_transform, bool depth, glm::mat4 const& lightSpaceMatrix) const {
+    for (const auto& prim: primitives) {
+        prim.draw(node_transform, depth);
     }
 }
 
-void GltfMesh::drawWithoutTextures() {
-    for (const auto &prim: this->primitives) {
-        prim.drawWithoutTextures();
+inline void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
+    for (auto& prim: primitives) {
+        prim.set_primitive_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
     }
 }
 
-GLuint load_texture_to_gpu(tinygltf::Model &root, tinygltf::TextureInfo texinfo) {
-    assert((texinfo.index >= 0) && ((unsigned long)texinfo.index < root.textures.size()));
-    tinygltf::Texture gltftex = root.textures[texinfo.index];
-
-    assert((gltftex.source >= 0) && ((unsigned long)gltftex.source < root.images.size()));
-    tinygltf::Image image = root.images[gltftex.source];
-
-    assert((gltftex.sampler >= 0) && ((unsigned long)gltftex.sampler < root.textures.size()));
-    tinygltf::Sampler sampler = root.samplers[gltftex.sampler];
-
-    GLenum tex_components/*, tex_bits*/;
-    switch (image.component) {
-        case 3:
-            tex_components = GL_RGB;
-            //tex_bits = GL_RGB8;
-            break;
-
-        case 4:
-            tex_components = GL_RGBA;
-            //tex_bits = GL_RGBA8;
-            break;
-        default:
-            printf("%d components isn't supported right now", image.component);
-            throw -1;
-    }
-
-    assert(image.as_is == false);
-
-    GLuint gputex;
-    glGenTextures(1, &gputex);
-    glBindTexture(GL_TEXTURE_2D, gputex);
-    glTexImage2D(GL_TEXTURE_2D, 0, tex_components, image.width, image.height, 0, tex_components, image.pixel_type, image.image.data());
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, sampler.wrapS);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, sampler.wrapT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sampler.minFilter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sampler.magFilter);
-
-    return gputex;
-}
-
-GltfMaterial::GltfMaterial(tinygltf::Model &root, tinygltf::Material material) {
-    std::copy(material.pbrMetallicRoughness.baseColorFactor.cbegin(), material.pbrMetallicRoughness.baseColorFactor.cbegin() + 3, basecolor);
-    metallic_factor = material.pbrMetallicRoughness.metallicFactor;
-    roughness_factor = material.pbrMetallicRoughness.roughnessFactor;
-
-    tinygltf::TextureInfo basecolor_texinfo = material.pbrMetallicRoughness.baseColorTexture;
-    tinygltf::TextureInfo metallic_roughness_texinfo = material.pbrMetallicRoughness.metallicRoughnessTexture;
-
-    printf("Loading textures...\n");
-    basecolor_gputex = (basecolor_texinfo.index >= 0) ?
-        std::optional(load_texture_to_gpu(root, basecolor_texinfo)) :
-        std::nullopt;
-
-    metallic_roughness_gputex = (metallic_roughness_texinfo.index >= 0) ?
-        std::optional(load_texture_to_gpu(root, metallic_roughness_texinfo)) :
-        std::nullopt;
-
-    printf("Textures loaded !\n");
-}
-
-void GltfMaterial::activate(Shader &shader) const {
-    if (basecolor_gputex.has_value()) {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, basecolor_gputex.value());
-    } else {
-        shader.setVec3("base_color", glm::vec3(basecolor[0], basecolor[1], basecolor[2]));
-    }
-
-    if (metallic_roughness_gputex.has_value()) {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, metallic_roughness_gputex.value());
-    } else {
-        shader.setFloat("metallic_factor", metallic_factor);
-        shader.setFloat("roughness_factor", roughness_factor);
-    }
-}
-
-GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &prim) {
+GltfPrimitive::GltfPrimitive(tinygltf::Model& root, const tinygltf::Primitive& prim, ShaderStore& shader_store, int emmission) {
     glGenVertexArrays(1, &vao);
-    //printf("VAO num: %lu\n", vao);
     glBindVertexArray(vao);
 
     typedef struct {
@@ -212,15 +156,17 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
 
     int stride = 3;
 
+    bool has_normals = false;
+
     for (const auto &attr : prim.attributes) {
-        assert((attr.second >= 0) && ((unsigned long)attr.second < root.accessors.size()));
+        assert((attr.second >= 0) && (static_cast<size_t>(attr.second) < root.accessors.size()));
         tinygltf::Accessor accessor = root.accessors[attr.second];
         assert(accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT);
 
-        assert((accessor.bufferView >= 0) && ((unsigned long)accessor.bufferView < root.bufferViews.size()));
+        assert((accessor.bufferView >= 0) && (static_cast<size_t>(accessor.bufferView) < root.bufferViews.size()));
         tinygltf::BufferView buffer_view = root.bufferViews[accessor.bufferView];
 
-        assert((buffer_view.buffer >= 0) && ((unsigned long)buffer_view.buffer < root.buffers.size()));
+        assert((buffer_view.buffer >= 0) && (static_cast<size_t>(buffer_view.buffer) < root.buffers.size()));
         tinygltf::Buffer buffer = root.buffers[buffer_view.buffer];
 
         if (attr.first.compare("POSITION") == 0) {
@@ -230,6 +176,7 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
             normal_buf = std::optional(BufferInfos { accessor, buffer_view, buffer });
             stride += 3;
             printf("model has normals\n");
+            has_normals = true;
         } else if (attr.first.compare("TEXCOORD_0") == 0) {
             texcoord_buf = std::optional(BufferInfos { accessor, buffer_view, buffer });
             stride += 2;
@@ -289,40 +236,158 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model &root, const tinygltf::Primitive &p
     glGenBuffers(1, &ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-    assert((prim.indices >= 0) && ((unsigned long)prim.indices < root.accessors.size()));
+    assert((prim.indices >= 0) && (static_cast<size_t>(prim.indices) < root.accessors.size()));
     tinygltf::Accessor indices_accessor = root.accessors[prim.indices];
     
-    assert((indices_accessor.bufferView >= 0) && ((unsigned long)indices_accessor.bufferView < root.bufferViews.size()));
+    assert((indices_accessor.bufferView >= 0) && (static_cast<size_t>(indices_accessor.bufferView) < root.bufferViews.size()));
     tinygltf::BufferView indices_buffer_view = root.bufferViews[indices_accessor.bufferView];
 
-    assert((indices_buffer_view.buffer >= 0) && ((unsigned long)indices_buffer_view.buffer < root.buffers.size()));
+    assert((indices_buffer_view.buffer >= 0) && (static_cast<size_t>(indices_buffer_view.buffer) < root.buffers.size()));
     tinygltf::Buffer indices_buffer = root.buffers[indices_buffer_view.buffer];
 
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_buffer_view.byteLength, indices_buffer.data.data() + indices_buffer_view.byteOffset, GL_STATIC_DRAW);
 
     glBindVertexArray(0);
 
-    assert((prim.material >= 0) && ((unsigned long)prim.material < root.materials.size()));
+    assert((prim.material >= 0) && (static_cast<size_t>(prim.material) < root.materials.size()));
     tinygltf::Material mat = root.materials[prim.material];
 
-    material = GltfMaterial(root, mat);
+    material = GltfMaterial(root, mat, shader_store, has_normals);
 
     draw_mode = prim.mode;
     vertex_count = indices_accessor.count;
 }
 
-void GltfPrimitive::draw(Shader &shader) const {
+void GltfPrimitive::draw(const mat4& node_transform, bool depth, glm::mat4 const& lightSpaceMatrix  ) const {
     glBindVertexArray(vao);
 
-    material.activate(shader);
+    material.activate(node_transform);
 
-    glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, (void*)0);
+    glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, static_cast<void*>(0));
     glBindVertexArray(0);
 }
 
-void GltfPrimitive::drawWithoutTextures() const {
-    glBindVertexArray(vao);
+inline void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
+    material.set_material_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
+}
 
-    glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, (void*)0);
-    glBindVertexArray(0);
+GLuint load_texture_to_gpu(tinygltf::Model& root, tinygltf::TextureInfo texinfo) {
+    assert((texinfo.index >= 0) && (static_cast<size_t>(texinfo.index) < root.textures.size()));
+    tinygltf::Texture gltftex = root.textures[texinfo.index];
+
+    assert((gltftex.source >= 0) && (static_cast<size_t>(gltftex.source) < root.images.size()));
+    tinygltf::Image image = root.images[gltftex.source];
+
+    assert((gltftex.sampler >= 0) && (static_cast<size_t>(gltftex.sampler) < root.textures.size()));
+    tinygltf::Sampler sampler = root.samplers[gltftex.sampler];
+
+    GLenum tex_components/*, tex_bits*/;
+    switch (image.component) {
+        case 3:
+            tex_components = GL_RGB;
+            //tex_bits = GL_RGB8;
+            break;
+
+        case 4:
+            tex_components = GL_RGBA;
+            //tex_bits = GL_RGBA8;
+            break;
+        default:
+            printf("%d components isn't supported right now", image.component);
+            throw -1;
+    }
+
+    assert(image.as_is == false);
+
+    GLuint gputex;
+    glGenTextures(1, &gputex);
+    glBindTexture(GL_TEXTURE_2D, gputex);
+    glTexImage2D(GL_TEXTURE_2D, 0, tex_components, image.width, image.height, 0, tex_components, image.pixel_type, image.image.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, sampler.wrapS);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, sampler.wrapT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sampler.minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sampler.magFilter);
+
+    return gputex;
+}
+
+GltfMaterial::GltfMaterial(tinygltf::Model& root, tinygltf::Material material, ShaderStore& shader_store, bool has_normals) {
+    std::copy(material.pbrMetallicRoughness.baseColorFactor.cbegin(), material.pbrMetallicRoughness.baseColorFactor.cbegin() + 3, basecolor);
+    metallic_factor = material.pbrMetallicRoughness.metallicFactor;
+    roughness_factor = material.pbrMetallicRoughness.roughnessFactor;
+
+    tinygltf::TextureInfo basecolor_texinfo = material.pbrMetallicRoughness.baseColorTexture;
+    tinygltf::TextureInfo metallic_roughness_texinfo = material.pbrMetallicRoughness.metallicRoughnessTexture;
+
+    std::bitset<4> shader_features;
+
+    printf("Loading textures...\n");
+    if (basecolor_texinfo.index >= 0) {
+        basecolor_gputex = std::optional(load_texture_to_gpu(root, basecolor_texinfo));
+
+        shader_features.set(1);
+    } else {
+        basecolor_gputex = std::nullopt;
+    }
+
+    if (metallic_roughness_texinfo.index >= 0) {
+        metallic_roughness_gputex = std::optional(load_texture_to_gpu(root, metallic_roughness_texinfo));
+
+        shader_features.set(2);
+    } else {
+        metallic_roughness_gputex = std::nullopt;
+    }
+
+    if (has_normals) {
+        shader_features.set(0);
+    }
+
+    shader_features[3] = false;
+
+    mat_shader = &shader_store.get_shader(shader_features);
+
+    shader_features[3] = true;
+
+    depth_shader = &shader_store.get_shader(shader_features);
+
+    printf("Textures loaded !\n");
+}
+
+inline void GltfMaterial::activate(const mat4& node_transform, bool depth, glm::mat4 const& lightSpaceMatrix) const {
+    if (depth){
+        depth_shader->use();
+        depth_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        mat4 modelMat = node_transform * model_transform;
+        depth_shader->setMat4("model", modelMat);
+        depth_shader->setMat4("transform", projection_transform * view_transform * modelMat);
+    }
+    else {
+        mat_shader->use();
+        mat4 modelMat = node_transform * model_transform;
+        mat_shader->setMat4("model", modelMat);
+        mat_shader->setMat4("transform", projection_transform * view_transform * modelMat);
+
+        if (basecolor_gputex.has_value()) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, basecolor_gputex.value());
+        } else {
+            mat_shader->setVec3("base_color", glm::vec3(basecolor[0], basecolor[1], basecolor[2]));
+        }
+
+        if (metallic_roughness_gputex.has_value()) {
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, metallic_roughness_gputex.value());
+        } else {
+            mat_shader->setFloat("metallic_factor", metallic_factor);
+            mat_shader->setFloat("roughness_factor", roughness_factor);
+        }
+    }
+}
+
+inline void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
+    uniforms_fn(mat_shader);
+    this->model_transform = model_transform;
+    this->view_transform = view_matrix;
+    this->projection_transform = projection_matrix;
 }

@@ -1,19 +1,26 @@
-project('OpenGL', 'c', 'cpp', version : 'pre-release', default_options: ['cpp_std=c++17'])
+project('OpenGL', 'c', 'cpp', version : 'pre-release', default_options: ['cpp_std=c++20'])
 
-cppDir = 'src/'
+cpp_compiler = meson.get_compiler('cpp')
+if cpp_compiler.get_id() == 'gcc'
+  add_global_arguments('-std=gnu++20', language: 'cpp')
+elif cpp_compiler.get_id() == 'msvc'
+  add_global_arguments('/std:c++20', language: 'cpp')
+endif
 
-personnalCppLibs = cppDir + 'libs/'
+cpp_dir = 'src/'
 
-toolsDir = cppDir + 'tools/'
+personnal_cpp_libs = cpp_dir + 'libs/'
 
-OpenGL_lib = cppDir + 'OpenGL_libs/'
+tools_dir = cpp_dir + 'tools/'
 
-cppSources = [cppDir + 'main.cpp', cppDir + 'render.cpp']
-OpenGlLibsSources = [OpenGL_lib + 'glad.c']
-personnal_cpp_sources = [cppDir + 'callbacks.cpp']
-toolsSources = [toolsDir + 'camera.cpp', toolsDir + 'shader.cpp', toolsDir + 'gltfloader.cpp', toolsDir + 'object.cpp']
+opengl_lib = cpp_dir + 'OpenGL_libs/'
 
-sources = [cppSources, OpenGlLibsSources, personnal_cpp_sources, toolsSources]
+cpp_sources = [cpp_dir + 'main.cpp', cpp_dir + 'render.cpp']
+opengl_libs_sources = [opengl_lib + 'glad.c']
+personnal_cpp_sources = [cpp_dir + 'callbacks.cpp']
+tools_sources = [tools_dir + 'camera.cpp', tools_dir + 'shader.cpp', tools_dir + 'gltfloader.cpp', tools_dir + 'object.cpp']
+
+sources = [cpp_sources, opengl_libs_sources, personnal_cpp_sources, tools_sources]
 include_dir = include_directories('Include')
 glfw_dep = dependency('glfw3')
 glm_dep = dependency('glm')

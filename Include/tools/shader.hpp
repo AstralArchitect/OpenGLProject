@@ -5,9 +5,9 @@
 #include <glm/glm.hpp>
 
 #include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
+#include <filesystem>
+#include <unordered_map>
+#include <bitset>
 
 class Shader
 {
@@ -19,12 +19,12 @@ public:
     // ------------------------------------------------------------------------
     Shader(std::string const& vertexPath, std::string const& fragmentPath);
     // constructeur avec spé du dossier (strings moins long)
-    Shader(std::string const& folder, std::string vertexName, std::string fragmentName);
+    Shader(std::string const& folder, std::string const& vertexName, std::string const& fragmentName);
+
+    Shader(std::bitset<4>, std::filesystem::path);
 
     // Ouais ptit constructeur avec la syntax dégueulasse du C++ toi même tu sais
     Shader(): ID(0) {};
-
-    static Shader fromStr(const char* vertexShader, const char* fragmentShader);
 
     void paths(const char* vertexPath, const char* fragmentPath);
 
@@ -54,11 +54,20 @@ public:
     void setMat3(const std::string &name, const glm::mat3 &mat) const;
     // ------------------------------------------------------------------------
     void setMat4(const std::string &name, const glm::mat4 &mat) const;
+};
 
-private:
-    // utility function for checking shader compilation/linking errors.
-    // ------------------------------------------------------------------------
-    static void checkCompileErrors(GLuint shader, std::string type);
+const std::bitset<3> HAS_NORMALS = 1;
+const std::bitset<3> HAS_BASE_COLOR_TEX = 1 << 1;
+const std::bitset<3> HAS_PBR_TEX = 1 << 2;
+
+class ShaderStore {
+    public:
+        Shader& get_shader(std::bitset<4> flags);
+        ShaderStore(std::filesystem::path path): shaders_dir(path) {}
+
+    private:
+        std::unordered_map<std::bitset<4>, Shader> loaded_shaders;
+        std::filesystem::path shaders_dir;
 };
 
 #endif

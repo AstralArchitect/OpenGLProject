@@ -1,8 +1,8 @@
 [wrap-file]
-directory = tinygltf-2.9.4
-source_url = https://github.com/syoyo/tinygltf/archive/refs/tags/v2.9.4.tar.gz
-source_filename = tinygltf-2.9.4.tar.gz
-source_hash = 16cd37cdfecd5d8204cdbc37d0affbcadf970dbd33da8d8a0feba5028124f946
+directory = tinygltf-2.9.5
+source_url = https://github.com/syoyo/tinygltf/archive/refs/tags/v2.9.5.tar.gz
+source_filename = tinygltf-2.9.5.tar.gz
+source_hash = 7b93da27c524dd17179a0eeba6f432b0060d82f6222630ba027c219ce11e24db
 method = cmake
 
 [provide]
