@@ -3,6 +3,8 @@ project('OpenGL', 'c', 'cpp', version : 'pre-release', default_options: ['cpp_st
 cpp_compiler = meson.get_compiler('cpp')
 if cpp_compiler.get_id() == 'gcc'
   add_global_arguments('-std=gnu++20', language: 'cpp')
+elif cpp_compiler.get_id() == 'msvc'
+  add_global_arguments('/std:c++20', language: 'cpp')
 endif
 
 cpp_dir = 'src/'

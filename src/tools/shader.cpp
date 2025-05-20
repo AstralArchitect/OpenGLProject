@@ -101,9 +101,12 @@ Shader::Shader(std::string const& folder, std::string const& vertex_path, std::s
     ID = compile_shader_code(vertex_shader_code.c_str(), fragment_shader_code.c_str());
 }
 
-Shader::Shader(std::bitset<3> flags, std::filesystem::path shaders_folder) {
-    std::string vertex_code = load_shader_file(shaders_folder / "pbr.vs");
-    std::string fragment_code = load_shader_file(shaders_folder / "pbr.fs");
+Shader::Shader(std::bitset<4> flags, std::filesystem::path shaders_folder) {
+    std::string vertexFile = flags[3] ? "depth.vs" : "pbr.vs";
+    std::string fragmentFile = flags[3] ? "depth.fs" : "pbr.fs";
+
+    std::string vertex_code = load_shader_file(shaders_folder / vertexFile);
+    std::string fragment_code = load_shader_file(shaders_folder / fragmentFile);
 
     size_t vertex_version_idx = vertex_code.find("#version");
     size_t vertex_end_version_idx = vertex_code.find("\n", vertex_version_idx) + 1;
@@ -200,7 +203,7 @@ void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const
     glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
 
-Shader& ShaderStore::get_shader(std::bitset<3> flags) {
+Shader& ShaderStore::get_shader(std::bitset<4> flags) {
     if (loaded_shaders.contains(flags)) {
         return loaded_shaders[flags];
     } else {

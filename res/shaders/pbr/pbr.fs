@@ -29,7 +29,7 @@ layout (std140) uniform Lights {
 #ifdef HAS_BASE_COLOR_TEX
 uniform sampler2D tex;
 #else
-uniform vec3 color;
+uniform vec3 base_color;
 #endif
 
 uniform sampler2D shadowMap;
@@ -97,6 +97,8 @@ float ShadowCalculation(vec4 fragPosLightSpace) {
 void main() {
 #ifdef HAS_BASE_COLOR_TEX
     vec3 color = texture(tex, fs_in.TexCoords).rgb;
+#else
+    vec3 color = base_color;
 #endif
 
     // ambient

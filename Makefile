@@ -1,27 +1,27 @@
 # Target to compile the project
 all:
-	meson compile -C builddir/
+	meson compile -C build/
 
 # Target to run the compiled binary
 run: all
 ifeq ($(OS),Windows_NT)
 	.\addToPathAndRun.bat
 else
-	./builddir/main
+	./build/main
 endif
 
 # Target to set up the build directory
 setupClang:
-	meson setup builddir --native-file=native-clang.txt
+	meson setup build --native-file=native-clang.txt
 setup:
-	meson setup builddir
+	meson setup build
 
 # Target to clean the build directory
 clean:
 ifeq ($(OS),Windows_NT)
-	@if exist builddir (rmdir builddir /S /Q)
+	@if exist build (rmdir build /S /Q)
 else
-	@if [ -d builddir ]; then rm -rf builddir; fi
+	@if [ -d build ]; then rm -rf build; fi
 endif
 
 resetup: clean setup

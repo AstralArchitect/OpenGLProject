@@ -21,7 +21,7 @@ public:
     // constructeur avec spé du dossier (strings moins long)
     Shader(std::string const& folder, std::string const& vertexName, std::string const& fragmentName);
 
-    Shader(std::bitset<3>, std::filesystem::path);
+    Shader(std::bitset<4>, std::filesystem::path);
 
     // Ouais ptit constructeur avec la syntax dégueulasse du C++ toi même tu sais
     Shader(): ID(0) {};
@@ -62,11 +62,11 @@ const std::bitset<3> HAS_PBR_TEX = 1 << 2;
 
 class ShaderStore {
     public:
-        Shader& get_shader(std::bitset<3> flags);
+        Shader& get_shader(std::bitset<4> flags);
         ShaderStore(std::filesystem::path path): shaders_dir(path) {}
 
     private:
-        std::unordered_map<std::bitset<3>, Shader> loaded_shaders;
+        std::unordered_map<std::bitset<4>, Shader> loaded_shaders;
         std::filesystem::path shaders_dir;
 };
 

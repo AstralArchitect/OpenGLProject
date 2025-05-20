@@ -38,9 +38,9 @@ GltfModel::GltfModel(const std::string& filename, ShaderStore& shader_store) {
     }
 }
 
-void GltfModel::draw() const {
+void GltfModel::draw(bool depth, glm::mat4 const& lightSpaceMatrix) const {
     for (const auto& child: children) {
-        child.draw();
+        child.draw(depth);
     }
 }
 
@@ -49,12 +49,6 @@ void GltfModel::draw() const {
 void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& child: children) {
         child.set_node_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
-    }
-}
-
-void GltfModel::drawWithoutTextures() {
-    for (GltfNode &child: this->children) {
-        child.drawWithoutTextures();
     }
 }
 
@@ -92,13 +86,13 @@ GltfNode::GltfNode(tinygltf::Model& root, tinygltf::Node node, ShaderStore& shad
     }
 }
 
-void GltfNode::draw() const {
+void GltfNode::draw(bool depth, glm::mat4 const& lightSpaceMatrix) const {
     for (const auto& child: children) {
-        child.draw();
+        child.draw(depth);
     }
 
     if (mesh.has_value()) {
-        mesh.value().draw(node_transform);
+        mesh.value().draw(node_transform, depth);
     }
 }
 
@@ -109,16 +103,6 @@ inline void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn
 
     if (this->mesh.has_value()) {
         this->mesh.value().set_mesh_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
-    }
-}
-
-void GltfNode::drawWithoutTextures() {
-    for (auto& child: children) {
-        child.drawWithoutTextures();
-    }
-
-    if (mesh.has_value()) {
-        mesh.value().drawWithoutTextures();
     }
 }
 
@@ -141,21 +125,15 @@ void print_tuple(const std::tuple<T...> &tuple_to_print) {
     print_tuple_util(tuple_to_print, std::make_index_sequence<sizeof...(T)>());
 }
 
-void GltfMesh::draw(const mat4& node_transform) const {
+void GltfMesh::draw(const mat4& node_transform, bool depth, glm::mat4 const& lightSpaceMatrix) const {
     for (const auto& prim: primitives) {
-        prim.draw(node_transform);
+        prim.draw(node_transform, depth);
     }
 }
 
 inline void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& prim: primitives) {
         prim.set_primitive_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
-    }
-}
-
-void GltfMesh::drawWithoutTextures() {
-    for (const auto &prim: this->primitives) {
-        prim.drawWithoutTextures();
     }
 }
 
@@ -280,7 +258,7 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model& root, const tinygltf::Primitive& p
     vertex_count = indices_accessor.count;
 }
 
-void GltfPrimitive::draw(const mat4& node_transform) const {
+void GltfPrimitive::draw(const mat4& node_transform, bool depth, glm::mat4 const& lightSpaceMatrix  ) const {
     glBindVertexArray(vao);
 
     material.activate(node_transform);
@@ -291,13 +269,6 @@ void GltfPrimitive::draw(const mat4& node_transform) const {
 
 inline void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     material.set_material_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
-}
-
-void GltfPrimitive::drawWithoutTextures() const {
-    glBindVertexArray(vao);
-
-    glDrawElements(draw_mode, vertex_count, GL_UNSIGNED_SHORT, static_cast<void*>(0));
-    glBindVertexArray(0);
 }
 
 GLuint load_texture_to_gpu(tinygltf::Model& root, tinygltf::TextureInfo texinfo) {
@@ -349,7 +320,7 @@ GltfMaterial::GltfMaterial(tinygltf::Model& root, tinygltf::Material material, S
     tinygltf::TextureInfo basecolor_texinfo = material.pbrMetallicRoughness.baseColorTexture;
     tinygltf::TextureInfo metallic_roughness_texinfo = material.pbrMetallicRoughness.metallicRoughnessTexture;
 
-    std::bitset<3> shader_features;
+    std::bitset<4> shader_features;
 
     printf("Loading textures...\n");
     if (basecolor_texinfo.index >= 0) {
@@ -372,30 +343,45 @@ GltfMaterial::GltfMaterial(tinygltf::Model& root, tinygltf::Material material, S
         shader_features.set(0);
     }
 
+    shader_features[3] = false;
+
     mat_shader = &shader_store.get_shader(shader_features);
+
+    shader_features[3] = true;
+
+    depth_shader = &shader_store.get_shader(shader_features);
 
     printf("Textures loaded !\n");
 }
 
-inline void GltfMaterial::activate(const mat4& node_transform) const {
-    mat_shader->use();
-    mat4 modelMat = node_transform * model_transform;
-    mat_shader->setMat4("model", modelMat);
-    mat_shader->setMat4("transform", projection_transform * view_transform * modelMat);
-
-    if (basecolor_gputex.has_value()) {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, basecolor_gputex.value());
-    } else {
-        mat_shader->setVec3("base_color", glm::vec3(basecolor[0], basecolor[1], basecolor[2]));
+inline void GltfMaterial::activate(const mat4& node_transform, bool depth, glm::mat4 const& lightSpaceMatrix) const {
+    if (depth){
+        depth_shader->use();
+        depth_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        mat4 modelMat = node_transform * model_transform;
+        depth_shader->setMat4("model", modelMat);
+        depth_shader->setMat4("transform", projection_transform * view_transform * modelMat);
     }
+    else {
+        mat_shader->use();
+        mat4 modelMat = node_transform * model_transform;
+        mat_shader->setMat4("model", modelMat);
+        mat_shader->setMat4("transform", projection_transform * view_transform * modelMat);
 
-    if (metallic_roughness_gputex.has_value()) {
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, metallic_roughness_gputex.value());
-    } else {
-        mat_shader->setFloat("metallic_factor", metallic_factor);
-        mat_shader->setFloat("roughness_factor", roughness_factor);
+        if (basecolor_gputex.has_value()) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, basecolor_gputex.value());
+        } else {
+            mat_shader->setVec3("base_color", glm::vec3(basecolor[0], basecolor[1], basecolor[2]));
+        }
+
+        if (metallic_roughness_gputex.has_value()) {
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, metallic_roughness_gputex.value());
+        } else {
+            mat_shader->setFloat("metallic_factor", metallic_factor);
+            mat_shader->setFloat("roughness_factor", roughness_factor);
+        }
     }
 }
 
