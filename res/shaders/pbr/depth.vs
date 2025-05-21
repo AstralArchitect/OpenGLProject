@@ -11,10 +11,9 @@ layout (location = 2) in vec3 aNormal;
 #endif
 
 uniform mat4 transform;
-uniform mat4 model;
 uniform mat4 lightSpaceMatrix;
 
 void main()
 {
-    gl_Position = transform * lightSpaceMatrix * model * vec4(aPos, 1.0);
+    gl_Position = lightSpaceMatrix * transform *  vec4(aPos, 1.0);
 }

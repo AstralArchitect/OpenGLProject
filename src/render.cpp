@@ -47,7 +47,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model
 
     // world transformation
     model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(4.0f, 1.0f, 4.0f));
+    model = glm::scale(model, glm::vec3(100.0f, 1.0f, 100.0f));
     plan.shader.setMat4("model", model);
     plan.shader.setMat4("view", view);
     plan.shader.setMat4("projection", projection);
@@ -113,5 +113,6 @@ void Render::renderScene(GLFWwindow *window, Object &plan, GltfModel &gltf_model
     // gltf model
     model = glm::scale(model, glm::vec3(.5f));
     model = glm::translate(model, glm::vec3(.0, -2, 0.0));
+    gltf_model.set_global_uniforms([&] (Shader* shader) {}, model, glm::mat4(1.0f), glm::mat4(1.0f), true);
     gltf_model.draw(true, lightSpaceMatrix);
 }
