@@ -47,7 +47,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model
 
     // world transformation
     model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(100.0f, 1.0f, 100.0f));
+    model = glm::scale(model, glm::vec3(4.f, 1.f, 4.f));
     plan.shader.setMat4("model", model);
     plan.shader.setMat4("view", view);
     plan.shader.setMat4("projection", projection);
@@ -78,8 +78,6 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model
         shader->setVec3("viewPos", camera.Position);
         shader->setVec3("lightPos", lightPos);
         shader->setVec3("ambientColor", backgroundColor);
-        shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        shader->setVec3("ambientColor", backgroundColor);
         shader->setInt("shadowMap", 2);
     }, model, view, projection);
 
@@ -93,15 +91,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &gltf_model
     model = glm::translate(model, lightPos);
     model = glm::scale(model, glm::vec3(0.075f));
 
-    light.set_global_uniforms([&] (Shader* shader) {
-        shader->use();
-        shader->setVec3("viewPos", camera.Position);
-        shader->setVec3("lightPos", lightPos);
-        shader->setVec3("ambientColor", backgroundColor);
-        shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        shader->setVec3("ambientColor", backgroundColor);
-        shader->setInt("shadowMap", 2);
-    }, model, view, projection);    
+    light.set_global_uniforms([&] (Shader* shader) {}, model, view, projection);    
 
     //draw
     light.draw();
@@ -113,6 +103,6 @@ void Render::renderScene(GLFWwindow *window, Object &plan, GltfModel &gltf_model
     // gltf model
     model = glm::scale(model, glm::vec3(.5f));
     model = glm::translate(model, glm::vec3(.0, -2, 0.0));
-    gltf_model.set_global_uniforms([&] (Shader* shader) {}, model, glm::mat4(1.0f), glm::mat4(1.0f), true);
+    gltf_model.set_global_model_transform(model);
     gltf_model.draw(true, lightSpaceMatrix);
 }

@@ -16,16 +16,6 @@ in VS_OUT {
 	vec4 FragPosLightSpace;
 } fs_in;
 
-struct Light {
-    vec3 position;
-    int strength;
-};
-
-layout (std140) uniform Lights {
-    int size;
-    Light lights[];
-};
-
 #ifdef HAS_BASE_COLOR_TEX
 uniform sampler2D tex;
 #else
@@ -38,6 +28,7 @@ uniform vec3 viewPos;
 
 uniform vec3 ambientColor;
 
+// if there's normals, calculate shadows with the bias, if no, without
 #ifdef HAS_NORMALS
 float ShadowCalculation(vec4 fragPosLightSpace, float bias) {
     // perform perspective divide
@@ -94,6 +85,7 @@ float ShadowCalculation(vec4 fragPosLightSpace) {
 }
 #endif
 
+// main func
 void main() {
 #ifdef HAS_BASE_COLOR_TEX
     vec3 color = texture(tex, fs_in.TexCoords).rgb;
@@ -127,7 +119,7 @@ void main() {
     float shadow = ShadowCalculation(fs_in.FragPosLightSpace);
 #endif
 
-#ifdef HAS_BASE_COLOR_TEX
+#ifdef HAS_NORMALS
     FragColor = vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0);
 #else
     FragColor = vec4(ambient + (1.0 - shadow) * color, 1.0);

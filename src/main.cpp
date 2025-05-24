@@ -37,9 +37,7 @@ glm::vec3 lightPos(1.0/*cos(0)*/, 1.0, 0.0f/*sin(0)*/);
 glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
 
 // background strength
-glm::vec3 backgroundColor(0.2f, 0.2f, 0.2f);
-
-std::vector<Light> lights;
+glm::vec3 backgroundColor(.2f);
 
 int main()
 {
@@ -84,12 +82,6 @@ int main()
     plan.shader.setInt("shadowMap", 2);
 
     GltfModel gltfobj("./res/models/horloge.glb", shader_store);
-
-    /*Object gltfObj("./res/models/horloge.glb", "res/shaders/glbModel/vertex.vs", "res/shaders/glbModel/fragment.fs", "res/shaders/glbModel/depth.vs", "res/shaders/glbModel/depth.fs");
-    // create the model texture
-    gltfObj.shader.use();
-    gltfObj.shader.setInt("tex", 0);
-    gltfObj.shader.setInt("shadowMap", 2);*/
 
     // uniform buffer
     // --------------

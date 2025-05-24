@@ -63,6 +63,7 @@ const std::bitset<3> HAS_PBR_TEX = 1 << 2;
 class ShaderStore {
     public:
         Shader& get_shader(std::bitset<4> flags);
+        // et un ptit 2ème ;)
         ShaderStore(std::filesystem::path path): shaders_dir(path) {}
 
     private:

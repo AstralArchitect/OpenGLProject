@@ -46,9 +46,15 @@ void GltfModel::draw(bool depth, glm::mat4 const& lightSpaceMatrix) const {
 
 // Warning, when setting uniform for a model, don't touch directly (by shader.setMat4) the view and projection matrices set them by passing them as arguments to the set_global_uniform function
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix, bool depth) {
+void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& child: children) {
-        child.set_node_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix, depth);
+        child.set_node_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
+    }
+}
+
+void GltfModel::set_global_model_transform(const mat4& model) {
+    for (auto& child: children) {
+        child.set_node_model_transform(model);
     }
 }
 
@@ -88,21 +94,31 @@ GltfNode::GltfNode(tinygltf::Model& root, tinygltf::Node node, ShaderStore& shad
 
 void GltfNode::draw(bool depth, glm::mat4 const& lightSpaceMatrix) const {
     for (const auto& child: children) {
-        child.draw(depth);
+        child.draw(depth, lightSpaceMatrix);
     }
 
     if (mesh.has_value()) {
-        mesh.value().draw(node_transform, depth);
+        mesh.value().draw(node_transform, depth, lightSpaceMatrix);
     }
 }
 
-inline void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix, bool depth) {
+inline void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& child: children) {
-        child.set_node_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix, depth);
+        child.set_node_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
     }
 
     if (this->mesh.has_value()) {
-        this->mesh.value().set_mesh_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix, depth);
+        this->mesh.value().set_mesh_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
+    }
+}
+
+inline void GltfNode::set_node_model_transform(const mat4& model) {
+    for (auto& child: children) {
+        child.set_node_model_transform(model);
+    }
+
+    if (this->mesh.has_value()) {
+        this->mesh.value().set_mesh_model_transform(model);
     }
 }
 
@@ -127,13 +143,19 @@ void print_tuple(const std::tuple<T...> &tuple_to_print) {
 
 void GltfMesh::draw(const mat4& node_transform, bool depth, glm::mat4 const& lightSpaceMatrix) const {
     for (const auto& prim: primitives) {
-        prim.draw(node_transform, depth);
+        prim.draw(node_transform, depth, lightSpaceMatrix);
     }
 }
 
-inline void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix, bool depth) {
+inline void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& prim: primitives) {
-        prim.set_primitive_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix, depth);
+        prim.set_primitive_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
+    }
+}
+
+inline void GltfMesh::set_mesh_model_transform (const mat4& model) {
+    for (auto& prim: primitives) {
+        prim.set_primitive_model_transform(model);
     }
 }
 
@@ -258,7 +280,7 @@ GltfPrimitive::GltfPrimitive(tinygltf::Model& root, const tinygltf::Primitive& p
     vertex_count = indices_accessor.count;
 }
 
-void GltfPrimitive::draw(const mat4& node_transform, bool depth, glm::mat4 const& lightSpaceMatrix  ) const {
+void GltfPrimitive::draw(const mat4& node_transform, bool depth, glm::mat4 const& lightSpaceMatrix) const {
     glBindVertexArray(vao);
 
     material.activate(node_transform, depth, lightSpaceMatrix);
@@ -267,8 +289,12 @@ void GltfPrimitive::draw(const mat4& node_transform, bool depth, glm::mat4 const
     glBindVertexArray(0);
 }
 
-inline void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix, bool depth) {
-    material.set_material_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix, depth);
+inline void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
+    material.set_material_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
+}
+
+inline void GltfPrimitive::set_primitive_model_transform(const mat4& model) {
+    material.set_material_model_transform(model);
 }
 
 GLuint load_texture_to_gpu(tinygltf::Model& root, tinygltf::TextureInfo texinfo) {
@@ -357,9 +383,8 @@ GltfMaterial::GltfMaterial(tinygltf::Model& root, tinygltf::Material material, S
 inline void GltfMaterial::activate(const mat4& node_transform, bool depth, glm::mat4 const& lightSpaceMatrix) const {
     if (depth){
         depth_shader->use();
-        depth_shader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        mat4 modelMat = node_transform * model_transform;
-        depth_shader->setMat4("transform", modelMat);
+        mat4 depth_transform = lightSpaceMatrix * node_transform * model_transform;
+        depth_shader->setMat4("depth_transform", depth_transform);
     }
     else {
         mat_shader->use();
@@ -384,9 +409,13 @@ inline void GltfMaterial::activate(const mat4& node_transform, bool depth, glm::
     }
 }
 
-inline void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix, bool depth) {
-    uniforms_fn(depth ? depth_shader : mat_shader);
+inline void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
+    uniforms_fn(mat_shader);
     this->model_transform = model_transform;
     this->view_transform = view_matrix;
     this->projection_transform = projection_matrix;
+}
+
+inline void GltfMaterial::set_material_model_transform(const mat4& model_transform) {
+    this->model_transform = model_transform;
 }
