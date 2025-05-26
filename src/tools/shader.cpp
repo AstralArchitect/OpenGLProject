@@ -127,9 +127,6 @@ Shader::Shader(std::bitset<4> flags, std::filesystem::path shaders_folder) {
         fragment_code.insert(fragment_end_version_idx, "#define HAS_PBR_TEX\n");
     }
 
-    std::cout << "Vertex code:" << std::endl << vertex_code << std::endl;
-    std::cout << "Fragment code:" << std::endl << fragment_code << std::endl;
-
     ID = compile_shader_code(vertex_code.c_str(), fragment_code.c_str());
 }
 

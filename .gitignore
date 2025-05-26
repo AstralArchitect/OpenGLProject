@@ -3,5 +3,5 @@ packagecache/
 glfw-*/
 glm-*/
 tinygltf-*/
-horloge.blend1
+res/blender_models/*.blend1
 .vscode/

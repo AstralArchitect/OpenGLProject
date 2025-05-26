@@ -16,7 +16,8 @@ class GltfMaterial {
         GltfMaterial() {};
         inline void activate(const mat4& node_transform, bool depth = false, glm::mat4 const& lightSpaceMatrix = glm::mat4(1.0f)) const;
         inline void set_material_uniforms(std::function<void(Shader*)>, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
-        inline void set_material_model_transform(const mat4& model_transform);
+        inline void set_material_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
+        inline void set_material_uniforms(const mat4& model_transform);
 
     private:
         std::optional<GLuint> basecolor_gputex;
@@ -37,7 +38,8 @@ class GltfPrimitive {
         void draw(const mat4& node_transform, bool depth = false, glm::mat4 const& lightSpaceMatrix = glm::mat4(1.0f)) const;
         void drawWithoutTextures() const;
         inline void set_primitive_uniforms(std::function<void(Shader*)>, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
-        inline void set_primitive_model_transform(const mat4& model_transform);
+        inline void set_primitive_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
+        inline void set_primitive_uniforms(const mat4& model_transform);
     
     private:
         GLuint vao;
@@ -53,7 +55,8 @@ class GltfMesh {
         void draw(const mat4& node_transform, bool depth = false, glm::mat4 const& lightSpaceMatrix = glm::mat4(1.0f)) const;
         void drawWithoutTextures();
         inline void set_mesh_uniforms(std::function<void(Shader*)>, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
-        inline void set_mesh_model_transform(const mat4& model_transform);
+        inline void set_mesh_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
+        inline void set_mesh_uniforms(const mat4& model_transform);
 
     private:
         std::vector<GltfPrimitive> primitives;
@@ -65,7 +68,8 @@ class GltfNode {
         void draw(bool depth = false, glm::mat4 const& lightSpaceMatrix = glm::mat4(1.0f)) const;
         void drawWithoutTextures();
         inline void set_node_uniforms(std::function<void(Shader*)>, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
-        inline void set_node_model_transform(const mat4& model_transform);
+        inline void set_node_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
+        inline void set_node_uniforms(const mat4& model_transform);
 
     private:
         std::optional<GltfMesh> mesh;
@@ -82,7 +86,8 @@ class GltfModel {
         // -----------
         // When setting uniform for a model, don't touch directly (by shader.setMat4) the view and projection matrices set them by passing as arguments to the set_global_uniform function
         void set_global_uniforms(std::function<void(Shader*)>, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
-        void set_global_model_transform(const mat4& model_transform);
+        void set_global_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix);
+        void set_global_uniforms(const mat4& model_transform);
 
     private:
         tinygltf::Model tiny_model;

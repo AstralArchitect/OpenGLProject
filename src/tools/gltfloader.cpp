@@ -52,9 +52,15 @@ void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn, co
     }
 }
 
-void GltfModel::set_global_model_transform(const mat4& model) {
+void GltfModel::set_global_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& child: children) {
-        child.set_node_model_transform(model);
+        child.set_node_uniforms(model_transform, view_matrix, projection_matrix);
+    }
+}
+
+void GltfModel::set_global_uniforms(const mat4& model_transform) {
+    for (auto& child: children) {
+        child.set_node_uniforms(model_transform);
     }
 }
 
@@ -112,13 +118,23 @@ inline void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn
     }
 }
 
-inline void GltfNode::set_node_model_transform(const mat4& model) {
+inline void GltfNode::set_node_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& child: children) {
-        child.set_node_model_transform(model);
+        child.set_node_uniforms(model_transform, view_matrix, projection_matrix);
     }
 
     if (this->mesh.has_value()) {
-        this->mesh.value().set_mesh_model_transform(model);
+        this->mesh.value().set_mesh_uniforms(model_transform, view_matrix, projection_matrix);
+    }
+}
+
+inline void GltfNode::set_node_uniforms(const mat4& model_transform) {
+    for (auto& child: children) {
+        child.set_node_uniforms(model_transform);
+    }
+
+    if (this->mesh.has_value()) {
+        this->mesh.value().set_mesh_uniforms(model_transform);
     }
 }
 
@@ -153,9 +169,15 @@ inline void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn
     }
 }
 
-inline void GltfMesh::set_mesh_model_transform (const mat4& model) {
+inline void GltfMesh::set_mesh_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& prim: primitives) {
-        prim.set_primitive_model_transform(model);
+        prim.set_primitive_uniforms(model_transform, view_matrix, projection_matrix);
+    }
+}
+
+inline void GltfMesh::set_mesh_uniforms(const mat4& model_transform) {
+    for (auto& prim: primitives) {
+        prim.set_primitive_uniforms(model_transform);
     }
 }
 
@@ -293,8 +315,12 @@ inline void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> u
     material.set_material_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
 }
 
-inline void GltfPrimitive::set_primitive_model_transform(const mat4& model) {
-    material.set_material_model_transform(model);
+inline void GltfPrimitive::set_primitive_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
+    material.set_material_uniforms(model_transform, view_matrix, projection_matrix);
+}
+
+inline void GltfPrimitive::set_primitive_uniforms(const mat4& model_transform) {
+    material.set_material_uniforms(model_transform);
 }
 
 GLuint load_texture_to_gpu(tinygltf::Model& root, tinygltf::TextureInfo texinfo) {
@@ -416,6 +442,12 @@ inline void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uni
     this->projection_transform = projection_matrix;
 }
 
-inline void GltfMaterial::set_material_model_transform(const mat4& model_transform) {
+inline void GltfMaterial::set_material_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
+    this->model_transform = model_transform;
+    this->view_transform = view_matrix;
+    this->projection_transform = projection_matrix;
+}
+
+inline void GltfMaterial::set_material_uniforms(const mat4& model_transform) {
     this->model_transform = model_transform;
 }
