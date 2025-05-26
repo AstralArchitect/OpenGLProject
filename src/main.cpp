@@ -37,7 +37,7 @@ glm::vec3 lightPos(1.0/*cos(0)*/, 1.0, 0.0f/*sin(0)*/);
 glm::vec3 pointLightColor = glm::vec3(1.0f, 0.9f, 0.8f);
 
 // background strength
-glm::vec3 backgroundColor(.2f);
+glm::vec3 backgroundColor(.5f);
 
 int main()
 {
