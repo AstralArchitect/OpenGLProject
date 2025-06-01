@@ -52,6 +52,18 @@ void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn, co
     }
 }
 
+void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& view_matrix, const mat4& projection_matrix) {
+    for (auto& child: children) {
+        child.set_node_uniforms(uniforms_fn, view_matrix, projection_matrix);
+    }
+}
+
+void GltfModel::set_global_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    for (auto& child: children) {
+        child.set_node_uniforms(uniforms_fn);
+    }
+}
+
 void GltfModel::set_global_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& child: children) {
         child.set_node_uniforms(model_transform, view_matrix, projection_matrix);
@@ -118,6 +130,26 @@ inline void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn
     }
 }
 
+inline void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& view_matrix, const mat4& projection_matrix) {
+    for (auto& child: children) {
+        child.set_node_uniforms(uniforms_fn, view_matrix, projection_matrix);
+    }
+
+    if (this->mesh.has_value()) {
+        this->mesh.value().set_mesh_uniforms(uniforms_fn, view_matrix, projection_matrix);
+    }
+}
+
+inline void GltfNode::set_node_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    for (auto& child: children) {
+        child.set_node_uniforms(uniforms_fn);
+    }
+
+    if (this->mesh.has_value()) {
+        this->mesh.value().set_mesh_uniforms(uniforms_fn);
+    }
+}
+
 inline void GltfNode::set_node_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& child: children) {
         child.set_node_uniforms(model_transform, view_matrix, projection_matrix);
@@ -166,6 +198,18 @@ void GltfMesh::draw(const mat4& node_transform, bool depth, glm::mat4 const& lig
 inline void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     for (auto& prim: primitives) {
         prim.set_primitive_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
+    }
+}
+
+inline void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& view_matrix, const mat4& projection_matrix) {
+    for (auto& prim: primitives) {
+        prim.set_primitive_uniforms(uniforms_fn, view_matrix, projection_matrix);
+    }
+}
+
+inline void GltfMesh::set_mesh_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    for (auto& prim: primitives) {
+        prim.set_primitive_uniforms(uniforms_fn);
     }
 }
 
@@ -315,6 +359,14 @@ inline void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> u
     material.set_material_uniforms(uniforms_fn, model_transform, view_matrix, projection_matrix);
 }
 
+inline void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& view_matrix, const mat4& projection_matrix) {
+    material.set_material_uniforms(uniforms_fn, view_matrix, projection_matrix);
+}
+
+inline void GltfPrimitive::set_primitive_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    material.set_material_uniforms(uniforms_fn);
+}
+
 inline void GltfPrimitive::set_primitive_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {
     material.set_material_uniforms(model_transform, view_matrix, projection_matrix);
 }
@@ -440,6 +492,16 @@ inline void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uni
     this->model_transform = model_transform;
     this->view_transform = view_matrix;
     this->projection_transform = projection_matrix;
+}
+
+inline void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_fn, const mat4& view_matrix, const mat4& projection_matrix) {
+    uniforms_fn(mat_shader);
+    this->view_transform = view_matrix;
+    this->projection_transform = projection_matrix;
+}
+
+inline void GltfMaterial::set_material_uniforms(std::function<void(Shader*)> uniforms_fn) {
+    uniforms_fn(mat_shader);
 }
 
 inline void GltfMaterial::set_material_uniforms(const mat4& model_transform, const mat4& view_matrix, const mat4& projection_matrix) {

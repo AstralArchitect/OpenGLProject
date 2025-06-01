@@ -81,7 +81,14 @@ int main()
     plan.shader.setInt("specularMap", 1);
     plan.shader.setInt("shadowMap", 2);
 
+    // create the horloge model and set the model matrix
     GltfModel horloge("./res/models/horloge.glb", shader_store);
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::scale(model, glm::vec3(.5f));
+    model = glm::translate(model, glm::vec3(.0, -2., 0.0));
+    horloge.set_global_uniforms(model);
+    
+    // create the aiguille model and set the model matrix
     GltfModel aiguille("./res/models/aiguille.glb", shader_store);
 
     // uniform buffer

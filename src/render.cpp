@@ -66,20 +66,13 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &horloge, G
 
     // horloge
     // -------
-
-    // world transformation
-    model = glm::mat4(1.0f);
-    //model = glm::rotate(model, (float)glfwGetTime() / 2.f, glm::vec3(0.0, 1.0, 0.0));
-    model = glm::scale(model, glm::vec3(.5f));
-    model = glm::translate(model, glm::vec3(.0, -2., 0.0));
-
     horloge.set_global_uniforms([&] (Shader* shader) {
         shader->use();
         shader->setVec3("viewPos", camera.Position);
         shader->setVec3("lightPos", lightPos);
         shader->setVec3("ambientColor", backgroundColor);
         shader->setInt("shadowMap", 2);
-    }, model, view, projection);
+    }, view, projection);
 
     // draw
     horloge.draw();
@@ -87,7 +80,26 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &horloge, G
     // aiguilles
     // ---------
 
-    // minutes
+    // set uniforms
+    aiguille.set_global_uniforms([&] (Shader* shader) {
+        shader->use();
+        shader->setVec3("viewPos", camera.Position);
+        shader->setVec3("lightPos", lightPos);
+        shader->setVec3("ambientColor", backgroundColor);
+        shader->setInt("shadowMap", 2);
+    }, view, projection);
+    // get the actual time
+    auto now_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+    // Convert to local time components
+    struct tm* local_time = localtime(&now_time);  // or gmtime() for UTC
+
+    int8 minutes = local_time->tm_min;
+    int32 hours = local_time->tm_hour;
+
+    if (hours == 0) {
+        hours = 12; // Convert 0 to 12 for midnight/noon
+    }
     
     // world transformation
     model = glm::mat4(1.0f);
@@ -95,40 +107,17 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &horloge, G
     model = glm::scale(model, glm::vec3(1.f/15.f));
     model = glm::translate(model, glm::vec3(.0, 0., 2.375));
     model = glm::rotate(model, glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
-    // get the actual minutes
-    auto now = std::chrono::system_clock::now();
-    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(now - std::chrono::system_clock::time_point{}).count();
-    int minutes = seconds % 3600 / 60;
-    // then convert it into degrees
-    model = glm::rotate(model, glm::radians(minutes * 6.f), glm::vec3(0.0, -1.0, 0.0));
+    // convert the actual time into degrees
+    auto min_model = glm::rotate(model, glm::radians(minutes * 6.f), glm::vec3(0.0, -1.0, 0.0));
+    auto hours_model = glm::rotate(model, glm::radians(hours * 30.f), glm::vec3(0.0, -1.0, 0.0));
+    hours_model = glm::scale(hours_model, glm::vec3(1.f, 1.f, 2.f/3.f));
 
-    aiguille.set_global_uniforms([&] (Shader* shader) {
-        shader->use();
-        shader->setVec3("viewPos", camera.Position);
-        shader->setVec3("lightPos", lightPos);
-        shader->setVec3("ambientColor", backgroundColor);
-        shader->setInt("shadowMap", 2);
-    }, model, view, projection);
-
-    // draw
+    // draw minutes
+    aiguille.set_global_uniforms(min_model);
     aiguille.draw();
 
-    // heures
-    // world transformation
-    model = glm::mat4(1.0f);
-    //model = glm::rotate(model, (float)glfwGetTime() / 2.f, glm::vec3(0.0, 1.0, 0.0));
-    model = glm::scale(model, glm::vec3(1.f/30.f));
-    model = glm::translate(model, glm::vec3(.0, 0., 4.75));
-    model = glm::rotate(model, glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f));
-    auto timePoint = std::chrono::system_clock::to_time_t(now);
-    std::tm* timeinfo = std::localtime(&timePoint);
-    int hours = timeinfo->tm_hour;
-    model = glm::rotate(model, glm::radians(hours * 30.f), glm::vec3(0.0, -1.0, 0.0));
-
-    // add just the new model
-    aiguille.set_global_uniforms(model);
-
-    // draw
+    // draw hours
+    aiguille.set_global_uniforms(hours_model);
     aiguille.draw();
 
     // Light object
