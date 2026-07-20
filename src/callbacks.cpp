@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -6,13 +8,14 @@
 #include <callbacks.hpp>
 
 #include <stb_image.h>
+#include <iostream>
 
 extern Camera camera;
 
 extern float deltaTime;
 
-const unsigned int SCR_WIDTH = 1920;
-const unsigned int SCR_HEIGHT = 1080;
+extern unsigned int SCR_WIDTH;
+extern unsigned int SCR_HEIGHT;
 double lastX = SCR_WIDTH / 2.0;
 double lastY = SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -40,10 +43,34 @@ void sleep_ms(unsigned long milliseconds) {
 
 #endif
 
+void Callback::Shadow_info::init()
+{
+    glGenFramebuffers(1, &depthMapFBO);
+    // create depth texture
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void Callback::processInput(GLFWwindow *window)
 {
+    static bool isFullscreen = false;
+    static int windowedWidth, windowedHeight, windowedPosX, windowedPosY;
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
     
@@ -56,10 +83,17 @@ void Callback::processInput(GLFWwindow *window)
     {
         camera.ProcessKeyboard(RIGHT, deltaTime);
         camera.ProcessMouseMovement(-(deltaTime) * 500, 0);
+    }/*
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+        camera.ProcessKeyboard(FORWARD, deltaTime);
     }
+    else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    }*/
+    
     if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS) {
-        static bool isFullscreen = false;
-        static int windowedWidth, windowedHeight, windowedPosX, windowedPosY;
         if (!isFullscreen) {
             glfwGetWindowSize(window, &windowedWidth, &windowedHeight);
             glfwGetWindowPos(window, &windowedPosX, &windowedPosY);
@@ -70,7 +104,7 @@ void Callback::processInput(GLFWwindow *window)
             glfwSetWindowMonitor(window, NULL, windowedPosX, windowedPosY, windowedWidth, windowedHeight, 0);
         }
         isFullscreen = !isFullscreen;
-        sleep_ms(500);
+        sleep_ms(100);
     }
     
 }
@@ -95,8 +129,8 @@ void Callback::mouse(GLFWwindow * window, double xposIn, double yposIn) {
 // ---------------------------------------------------------------------------------------------
 void Callback::framebuffer_size(GLFWwindow* window, int width, int height)
 {
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
+    SCR_WIDTH = width;
+    SCR_HEIGHT = height;
     glViewport(0, 0, width, height);
 }
 
@@ -121,7 +155,7 @@ GLFWwindow *createContextAndWindows(const unsigned int SCR_WIDTH, const unsigned
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, WindowTitle, NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, WindowTitle, NULL, NULL);
     if (window == NULL)
     {
         glfwTerminate();
