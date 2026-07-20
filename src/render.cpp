@@ -88,6 +88,7 @@ void Render::renderFrame(GLFWwindow *window, Object &plan, GltfModel &horloge, G
         shader->setVec3("ambientColor", backgroundColor);
         shader->setInt("shadowMap", 2);
     }, view, projection);
+    
     // get the actual time
     auto now_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
