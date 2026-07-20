@@ -2,7 +2,6 @@
 #define GLTF_LOADER_H
 
 #include <optional>
-
 #include <tiny_gltf.h>
 #include <glad/glad.h>
 #include <tools/shader.hpp>
